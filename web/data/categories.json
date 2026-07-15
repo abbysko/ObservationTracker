@@ -1,0 +1,10 @@
+[
+  { "id": "birds",      "label": "Birds",      "icon": "🐦", "colorToken": "--color-cat-birds"      },
+  { "id": "mammals",    "label": "Mammals",    "icon": "🦊", "colorToken": "--color-cat-mammals"    },
+  { "id": "reptiles",   "label": "Reptiles",   "icon": "🦎", "colorToken": "--color-cat-reptiles"   },
+  { "id": "amphibians", "label": "Amphibians", "icon": "🐸", "colorToken": "--color-cat-amphibians" },
+  { "id": "insects",    "label": "Insects",    "icon": "🦋", "colorToken": "--color-cat-insects"    },
+  { "id": "plants",     "label": "Plants",     "icon": "🌿", "colorToken": "--color-cat-plants"     },
+  { "id": "fungi",      "label": "Fungi",      "icon": "🍄", "colorToken": "--color-cat-fungi"      },
+  { "id": "other",      "label": "Other",      "icon": "🔭", "colorToken": "--color-cat-other"      }
+]

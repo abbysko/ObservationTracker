@@ -1,0 +1,74 @@
+{
+  "birds": [
+    "American Robin", "House Sparrow", "Mallard Duck", "Canada Goose", "Red-tailed Hawk",
+    "Blue Jay", "Black-capped Chickadee", "Northern Cardinal", "Downy Woodpecker",
+    "American Crow", "European Starling", "Rock Pigeon", "Mourning Dove",
+    "Great Blue Heron", "Osprey", "Bald Eagle", "Peregrine Falcon",
+    "Ruby-throated Hummingbird", "Barn Swallow", "Tree Swallow",
+    "American Goldfinch", "House Finch", "Dark-eyed Junco", "White-throated Sparrow",
+    "Song Sparrow", "Yellow Warbler", "Common Yellowthroat", "American Redstart",
+    "Wood Thrush", "Veery", "Eastern Bluebird", "American Kestrel",
+    "Killdeer", "American Woodcock", "Common Snipe", "Spotted Sandpiper",
+    "Belted Kingfisher", "Pileated Woodpecker", "Red-bellied Woodpecker",
+    "White-breasted Nuthatch", "Brown Creeper", "Winter Wren"
+  ],
+  "mammals": [
+    "White-tailed Deer", "Eastern Gray Squirrel", "Eastern Cottontail",
+    "Raccoon", "Virginia Opossum", "Striped Skunk", "Red Fox", "Coyote",
+    "American Black Bear", "River Otter", "Muskrat", "Beaver",
+    "Little Brown Bat", "Big Brown Bat", "Eastern Mole", "Star-nosed Mole",
+    "Short-tailed Shrew", "White-footed Mouse", "Meadow Vole",
+    "Woodchuck", "Chipmunk", "Red Squirrel", "Flying Squirrel",
+    "Porcupine", "Fisher", "Mink", "Long-tailed Weasel", "Bobcat"
+  ],
+  "reptiles": [
+    "Eastern Box Turtle", "Painted Turtle", "Snapping Turtle",
+    "Eastern Garter Snake", "Northern Water Snake", "Ring-necked Snake",
+    "Milk Snake", "Eastern Rat Snake", "Smooth Green Snake",
+    "Five-lined Skink", "Common Wall Lizard", "Eastern Fence Lizard"
+  ],
+  "amphibians": [
+    "American Toad", "Fowler's Toad", "Gray Treefrog", "Spring Peeper",
+    "Green Frog", "Bullfrog", "Pickerel Frog", "Wood Frog",
+    "Spotted Salamander", "Red-backed Salamander", "Marbled Salamander",
+    "Eastern Newt", "Jefferson Salamander"
+  ],
+  "insects": [
+    "Monarch Butterfly", "Eastern Tiger Swallowtail", "Black Swallowtail",
+    "Cabbage White", "Clouded Sulphur", "Red Admiral", "Painted Lady",
+    "Common Buckeye", "Pearl Crescent", "American Lady",
+    "Common Eastern Bumble Bee", "Eastern Carpenter Bee", "Honey Bee",
+    "Common Green Darner", "Eastern Pondhawk", "Halloween Pennant",
+    "Common Whitetail", "Twelve-spotted Skimmer",
+    "Firefly (Lightning Bug)", "Ladybug (Seven-spot)", "Praying Mantis",
+    "Walking Stick", "Milkweed Bug", "Assassin Bug",
+    "Luna Moth", "Cecropia Moth", "Polyphemus Moth"
+  ],
+  "plants": [
+    "White Oak", "Red Oak", "Sugar Maple", "Red Maple", "Silver Maple",
+    "American Elm", "White Ash", "Black Cherry", "Black Walnut",
+    "Shagbark Hickory", "Tulip Tree", "Sycamore", "Cottonwood",
+    "White Pine", "Eastern Hemlock", "Douglas Fir", "Red Cedar",
+    "Common Milkweed", "Swamp Milkweed", "Butterfly Weed",
+    "Black-eyed Susan", "Purple Coneflower", "Joe-Pye Weed",
+    "Goldenrod", "Wild Bergamot", "Wild Columbine",
+    "Trout Lily", "Trillium", "Jack-in-the-Pulpit", "Wild Ginger",
+    "Cattail", "Blue Flag Iris", "Common Reed",
+    "Poison Ivy", "Wild Blackberry", "Wild Raspberry"
+  ],
+  "fungi": [
+    "Chanterelle", "Hen of the Woods (Maitake)", "Chicken of the Woods",
+    "Giant Puffball", "Puffball", "Morel", "False Morel",
+    "Oyster Mushroom", "Lion's Mane", "Turkey Tail",
+    "Amanita muscaria (Fly Agaric)", "Death Cap", "Destroying Angel",
+    "Inky Cap", "Shaggy Mane", "King Bolete (Porcini)",
+    "Artist's Conk", "Birch Polypore", "Reishi"
+  ],
+  "other": [
+    "Spider (unidentified)", "Snail", "Slug", "Earthworm",
+    "Crayfish", "Freshwater Mussel", "Leech",
+    "Jellyfish", "Horseshoe Crab",
+    "Meteor / Shooting Star", "Cloud Formation", "Rainbow",
+    "Animal Track", "Owl Pellet", "Shed Snake Skin"
+  ]
+}
