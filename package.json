@@ -1,0 +1,9 @@
+{
+  "name": "observation-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "npx http-server ./web -c-1 -p 8080"
+  },
+  "devDependencies": {}
+}
