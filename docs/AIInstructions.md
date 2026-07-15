@@ -1,6 +1,7 @@
 # AI Instructions
 
 Guidance for using AI to help develop the project:
+
 - Never skip milestones.
 - Never refactor unrelated code without approval.
 - Keep the application working after every change.
@@ -11,4 +12,5 @@ Guidance for using AI to help develop the project:
 - When uncertain, choose the simpler solution.
 
 Notes:
+
 - Use these instructions as guardrails when generating code, tests, or documentation for the project.

@@ -8,6 +8,7 @@
 - Write tests for business logic and repository implementations.
 
 Commit conventions:
+
 - Small, focused commits
 - Descriptive messages
 - Keep the app runnable after each commit (per milestone guidance)

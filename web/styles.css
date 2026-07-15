@@ -1,5 +1,5 @@
 /* Design tokens */
-:root{
+:root {
   --bg: #f7f7f8;
   --surface: #ffffff;
   --text: #222222;
@@ -10,8 +10,8 @@
 }
 
 /* Dark mode via prefers-color-scheme */
-@media (prefers-color-scheme: dark){
-  :root{
+@media (prefers-color-scheme: dark) {
+  :root {
     --bg: #0b0b0c;
     --surface: #0f1112;
     --text: #e6e6e6;
@@ -21,14 +21,14 @@
 }
 
 /* Explicit theme override using data-theme on html */
-html[data-theme="dark"]{
+html[data-theme='dark'] {
   --bg: #0b0b0c;
   --surface: #0f1112;
   --text: #e6e6e6;
   --muted: #9a9a9a;
   --accent: #0a84ff;
 }
-html[data-theme="light"]{
+html[data-theme='light'] {
   --bg: #f7f7f8;
   --surface: #ffffff;
   --text: #222222;
@@ -37,28 +37,108 @@ html[data-theme="light"]{
 }
 
 /* Base layout */
-html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, Arial, sans-serif;background:var(--bg);color:var(--text)}
-#app{min-height:100%;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:16px;box-sizing:border-box}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+#app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 16px;
+  box-sizing: border-box;
+}
 
 /* Screen content */
-.screen{max-width:900px;margin:0 auto;background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
-.screen h1{margin:0 0 8px 0}
-.screen p{margin:0}
+.screen {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+.screen h1 {
+  margin: 0 0 8px 0;
+}
+.screen p {
+  margin: 0;
+}
 
 /* Bottom navigation */
-.bottom-nav{position:fixed;left:0;right:0;bottom:12px;display:flex;gap:12px;justify-content:center;padding:8px;pointer-events:auto}
-.bottom-nav .nav-button{background:var(--surface);border:none;padding:10px 16px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,0.08);cursor:pointer;color:var(--muted);font-weight:600}
-.bottom-nav .nav-button.active{background:linear-gradient(180deg, var(--accent), rgba(10,132,255,0.85));color:white;box-shadow:0 10px 24px rgba(10,132,255,0.12)}
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px;
+  pointer-events: auto;
+}
+.bottom-nav .nav-button {
+  background: var(--surface);
+  border: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+.bottom-nav .nav-button.active {
+  background: linear-gradient(180deg, var(--accent), rgba(10, 132, 255, 0.85));
+  color: white;
+  box-shadow: 0 10px 24px rgba(10, 132, 255, 0.12);
+}
 
 /* Dark-specific nav tweaks */
-html[data-theme="dark"] .bottom-nav .nav-button{box-shadow:0 6px 18px rgba(0,0,0,0.6)}
-html[data-theme="dark"] .bottom-nav .nav-button.active{box-shadow:0 10px 28px rgba(10,132,255,0.26)}
+html[data-theme='dark'] .bottom-nav .nav-button {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+}
+html[data-theme='dark'] .bottom-nav .nav-button.active {
+  box-shadow: 0 10px 28px rgba(10, 132, 255, 0.26);
+  background: linear-gradient(180deg, var(--accent), rgba(10, 132, 255, 0.95));
+  color: white;
+}
+
+/* Make surfaces stand out better in dark mode */
+html[data-theme='dark'] .screen {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6),
+    0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Ensure non-active buttons are legible */
+html[data-theme='dark'] .bottom-nav .nav-button {
+  color: rgba(255, 255, 255, 0.88);
+}
+html[data-theme='dark'] .bottom-nav .nav-button:not(.active) {
+  color: rgba(255, 255, 255, 0.78);
+}
 
 /* Make sure content has breathing room above nav on small screens */
-@media(max-width:600px){
-  #app{padding-bottom:84px}
-  .screen{margin:12px}
+@media (max-width: 600px) {
+  #app {
+    padding-bottom: 84px;
+  }
+  .screen {
+    margin: 12px;
+  }
 }
 
 /* Error state */
-.screen.error{background:rgba(255,230,230,0.95);color:crimson}
+.screen.error {
+  background: rgba(255, 230, 230, 0.95);
+  color: crimson;
+}

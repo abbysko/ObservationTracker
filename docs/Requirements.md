@@ -20,6 +20,7 @@ The application contains two categories of lists:
   - Edit items (add / rename / delete)
 
 Acceptance
+
 - A user can view built-in and custom lists. Built-in lists are visually distinct and cannot be edited directly.
 - Duplicating a built-in list creates a custom editable copy.
 
@@ -32,6 +33,7 @@ Acceptance
 - While a session is active the user cannot start another session until the current session is saved or discarded.
 
 Session lifecycle acceptance
+
 - Start → Active → Save or Discard
 - Saved sessions are immutable (read-only) in history.
 
@@ -60,6 +62,7 @@ Default displayName example: "Car Makes – Jul 15, 2026" (user may rename after
 - Corrections are performed with a long-press (see Corrections below).
 
 Acceptance
+
 - Taps are fast and reliable; the UI updates immediately and persists to in-memory state.
 
 ---
@@ -73,6 +76,7 @@ Acceptance
 - Only one item can be expanded at a time; tapping elsewhere collapses the expanded view.
 
 Acceptance
+
 - Long-press reliably reveals the correction controls.
 - Decrement cannot make the count negative.
 
@@ -85,6 +89,7 @@ Acceptance
 - Resorting is applied after a short delay (approximately 1–2 seconds) after the user stops tapping. The UI should not reflow a button while the user is actively interacting with it.
 
 Acceptance
+
 - Sorting delay prevents jitter during rapid tapping; reordered items animate smoothly when they move.
 
 ---
@@ -97,6 +102,7 @@ Acceptance
 - Version 1 does not provide aggregate statistics across sessions.
 
 Acceptance
+
 - Saved sessions preserve the full item set and counts (missing observations treated as zero).
 
 ---
@@ -110,6 +116,7 @@ Three primary tabs:
 - History — view saved sessions
 
 Track tab states:
+
 - Before session: list picker + Start Tracking button
 - During session: tracking interface (item grid, counts, correction UI)
 
