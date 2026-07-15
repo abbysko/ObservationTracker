@@ -9,17 +9,6 @@
   --gap: 12px;
 }
 
-/* Dark mode via prefers-color-scheme */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0b0c;
-    --surface: #0f1112;
-    --text: #e6e6e6;
-    --muted: #9a9a9a;
-    --accent: #0a84ff;
-  }
-}
-
 /* Explicit theme override using data-theme on html */
 html[data-theme='dark'] {
   --bg: #0b0b0c;
@@ -41,7 +30,11 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-family: Segoe UI, Roboto, Arial, sans-serif;
+  /* Prefer native iOS font on Apple devices, then Roboto/Helvetica, avoid Segoe UI/system-ui on Windows */
+  font-family: -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.4;
   background: var(--bg);
   color: var(--text);
 }

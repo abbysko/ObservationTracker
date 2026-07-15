@@ -9,13 +9,20 @@ const app = document.getElementById('app');
     const themeParam = params.get('theme');
     const saved = localStorage.getItem('theme');
     if (themeParam === 'dark' || themeParam === 'light') {
+      // explicit override via URL -> persist
       document.documentElement.setAttribute('data-theme', themeParam);
       localStorage.setItem('theme', themeParam);
     } else if (saved === 'dark' || saved === 'light') {
+      // previously saved preference
       document.documentElement.setAttribute('data-theme', saved);
     } else {
-      // no explicit theme: let CSS prefers-color-scheme decide (no attribute)
-      document.documentElement.removeAttribute('data-theme');
+      // No explicit user preference: mirror system preference on first load
+      const prefersDark =
+        window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const systemTheme = prefersDark ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', systemTheme);
+      // Do not persist this value; it is just an initial, system-matching default.
     }
   } catch (e) {
     console.warn('Theme init failed', e);
