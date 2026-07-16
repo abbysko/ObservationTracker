@@ -2,6 +2,18 @@
 console.log('ObservationTracker starting');
 const app = document.getElementById('app');
 
+// Load repository implementation (exposes window.repository)
+function loadRepository() {
+  return new Promise((resolve, reject) => {
+    if (window.repository) return resolve();
+    const s = document.createElement('script');
+    s.src = 'repository/index.js';
+    s.onload = () => resolve();
+    s.onerror = (e) => reject(e);
+    document.head.appendChild(s);
+  });
+}
+
 // Theme initialization: allow forcing theme via ?theme=dark|light or persist in localStorage
 (function initTheme() {
   try {
@@ -53,6 +65,12 @@ async function loadScreen(url) {
     const html = await res.text();
     app.innerHTML = html + '\n' + renderBottomNav();
     attachNavHandlers();
+    // Also load corresponding screen JS if it exists
+    const jsPath = url.replace(/\.html$/, '') + '.js';
+    const scr = document.createElement('script');
+    scr.src = jsPath;
+    scr.async = true;
+    document.body.appendChild(scr);
   } catch (err) {
     app.innerHTML =
       '<div class="screen error">Error loading screen</div>' +
@@ -83,8 +101,16 @@ function updateNav() {
   });
 }
 
-// initial load
-setScreen(state.current);
+// initialize after repository is ready
+loadRepository()
+  .then(() => {
+    setScreen(state.current);
+  })
+  .catch((err) => {
+    console.error('Failed to load repository', err);
+    // still try to load UI
+    setScreen(state.current);
+  });
 
 // expose for debugging
 window._obs = { setScreen, state };

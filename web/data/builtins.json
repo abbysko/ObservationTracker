@@ -1,0 +1,24 @@
+{
+  "lists": [
+    {
+      "id": "builtin-car-makes",
+      "name": "Car Makes",
+      "builtIn": true,
+      "items": [
+        { "id": "toyota", "name": "Toyota" },
+        { "id": "ford", "name": "Ford" },
+        { "id": "bmw", "name": "BMW" }
+      ]
+    },
+    {
+      "id": "builtin-us-states",
+      "name": "US States",
+      "builtIn": true,
+      "items": [
+        { "id": "ca", "name": "California" },
+        { "id": "ny", "name": "New York" },
+        { "id": "tx", "name": "Texas" }
+      ]
+    }
+  ]
+}

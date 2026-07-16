@@ -1,28 +1,52 @@
 /* Design tokens */
 :root {
   --bg: #f7f7f8;
+  /* neutral light surface for cards and buttons */
   --surface: #ffffff;
   --text: #222222;
   --muted: #6b6b6b;
   --accent: #0a84ff;
   --radius: 10px;
   --gap: 12px;
+
+  /* Semantic surface tokens (single source of truth for components) */
+  --surface-bg: var(--surface);
+  --surface-on: var(--muted); /* primary text/icon color used on surface */
+  --surface-on-muted: var(--muted); /* non-active / secondary text on surface */
+
+  /* Badge token */
+  --badge-color: var(--muted);
+
+  /* Accent-on color (text/icons placed on accent surfaces) */
+  --on-accent: #ffffff;
+
+  /* Error colors */
+  --error-bg: rgba(255, 230, 230, 0.95);
+  --error-color: crimson;
+
+  /* Badge border (subtle pill outline) */
+  --badge-border-color: rgba(0, 0, 0, 0.1);
+  --badge-border: 1px solid var(--badge-border-color);
 }
 
 /* Explicit theme override using data-theme on html */
 html[data-theme='dark'] {
   --bg: #0b0b0c;
-  --surface: #0f1112;
+  /* neutral dark surface for cards and buttons */
+  --surface: #1c1c1e;
   --text: #e6e6e6;
   --muted: #9a9a9a;
   --accent: #0a84ff;
-}
-html[data-theme='light'] {
-  --bg: #f7f7f8;
-  --surface: #ffffff;
-  --text: #222222;
-  --muted: #6b6b6b;
-  --accent: #0a84ff;
+
+  /* semantic overrides for dark */
+  --surface-bg: var(--surface);
+  --surface-on: rgba(255, 255, 255, 0.88);
+  --surface-on-muted: rgba(255, 255, 255, 0.78);
+
+  --badge-color: rgba(255, 255, 255, 0.9);
+
+  /* darker subtle outline for badge in dark mode */
+  --badge-border-color: hsla(0, 0%, 100%, 0.2);
 }
 
 /* Base layout */
@@ -30,7 +54,6 @@ html,
 body {
   height: 100%;
   margin: 0;
-  /* Prefer native iOS font on Apple devices, then Roboto/Helvetica, avoid Segoe UI/system-ui on Windows */
   font-family: -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -52,16 +75,9 @@ body {
 .screen {
   max-width: 900px;
   margin: 0 auto;
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 .screen h1 {
   margin: 0 0 8px 0;
-}
-.screen p {
-  margin: 0;
 }
 
 /* Bottom navigation */
@@ -77,47 +93,24 @@ body {
   pointer-events: auto;
 }
 .bottom-nav .nav-button {
-  background: var(--surface);
-  border: none;
+  background: var(--surface-bg);
   padding: 10px 16px;
   border-radius: 999px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  color: var(--muted);
+  color: var(--surface-on-muted);
   font-weight: 600;
+  border: var(--surface-border);
 }
 .bottom-nav .nav-button.active {
-  background: linear-gradient(180deg, var(--accent), rgba(10, 132, 255, 0.85));
-  color: white;
-  box-shadow: 0 10px 24px rgba(10, 132, 255, 0.12);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
-/* Dark-specific nav tweaks */
-html[data-theme='dark'] .bottom-nav .nav-button {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  color: var(--muted);
-}
-html[data-theme='dark'] .bottom-nav .nav-button.active {
-  box-shadow: 0 10px 28px rgba(10, 132, 255, 0.26);
-  background: linear-gradient(180deg, var(--accent), rgba(10, 132, 255, 0.95));
-  color: white;
-}
-
-/* Make surfaces stand out better in dark mode */
-html[data-theme='dark'] .screen {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 255, 255, 0.02) inset;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-/* Ensure non-active buttons are legible */
-html[data-theme='dark'] .bottom-nav .nav-button {
-  color: rgba(255, 255, 255, 0.88);
-}
-html[data-theme='dark'] .bottom-nav .nav-button:not(.active) {
-  color: rgba(255, 255, 255, 0.78);
+/* keep keyboard focus visible without using shadows */
+.bottom-nav .nav-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+  box-shadow: none !important;
 }
 
 /* Make sure content has breathing room above nav on small screens */
@@ -132,6 +125,49 @@ html[data-theme='dark'] .bottom-nav .nav-button:not(.active) {
 
 /* Error state */
 .screen.error {
-  background: rgba(255, 230, 230, 0.95);
-  color: crimson;
+  background: var(--error-bg);
+  color: var(--error-color);
+}
+
+/* Lists screen styles */
+.lists-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0 5px 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+}
+.list-title {
+  font-weight: 600;
+}
+.list-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.badge {
+  background: transparent;
+  border: var(--badge-border);
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--badge-color);
+  opacity: 0.95;
+  border-radius: 999px;
+  line-height: 1;
+}
+.list-row button.dup {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
 }
