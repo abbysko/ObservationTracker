@@ -5,28 +5,27 @@
   --surface: #ffffff;
   --text: #222222;
   --muted: #6b6b6b;
-  --accent: #0a84ff;
+  --accent: #6366f1;
   --radius: 10px;
-  --gap: 12px;
+  --on-accent: #ffffff;
+
+  /* Typography sizes (semantic) */
+  --fs-base: 15px; /* slightly smaller than browser default */
+  --fs-md: 14px;
+  --fs-sm: 12px;
+  --fs-xs: 11px;
 
   /* Semantic surface tokens (single source of truth for components) */
   --surface-bg: var(--surface);
-  --surface-on: var(--muted); /* primary text/icon color used on surface */
   --surface-on-muted: var(--muted); /* non-active / secondary text on surface */
-
-  /* Badge token */
-  --badge-color: var(--muted);
-
-  /* Accent-on color (text/icons placed on accent surfaces) */
-  --on-accent: #ffffff;
 
   /* Error colors */
   --error-bg: rgba(255, 230, 230, 0.95);
   --error-color: crimson;
 
-  /* Badge border (subtle pill outline) */
-  --badge-border-color: rgba(0, 0, 0, 0.1);
-  --badge-border: 1px solid var(--badge-border-color);
+  /* Generic border tokens (use for cards, dividers, nav) */
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border: 1px solid var(--border-color);
 }
 
 /* Explicit theme override using data-theme on html */
@@ -36,91 +35,154 @@ html[data-theme='dark'] {
   --surface: #1c1c1e;
   --text: #e6e6e6;
   --muted: #9a9a9a;
-  --accent: #0a84ff;
+  --on-accent: #ffffff;
 
   /* semantic overrides for dark */
   --surface-bg: var(--surface);
   --surface-on: rgba(255, 255, 255, 0.88);
   --surface-on-muted: rgba(255, 255, 255, 0.78);
 
-  --badge-color: rgba(255, 255, 255, 0.9);
-
-  /* darker subtle outline for badge in dark mode */
-  --badge-border-color: hsla(0, 0%, 100%, 0.2);
+  /* generic border color for dark */
+  --border-color: hsla(0, 0%, 100%, 0.06);
+  --border: 1px solid var(--border-color);
 }
 
 /* Base layout */
 html,
 body {
-  height: 100%;
+  /* use viewport height and prevent body from scrolling so the app region can scroll internally */
+  height: 100vh;
   margin: 0;
+  box-sizing: border-box;
   font-family: -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.4;
   background: var(--bg);
   color: var(--text);
+  /* set base font size from tokens so spacing scales with typography */
+  font-size: var(--fs-base);
+  overflow: hidden; /* prevent page-level scrolling */
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
 }
 #app {
-  min-height: 100%;
+  /* make the app fill the viewport and be the scroll container for content */
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 16px;
+  padding: 12px; /* reduce horizontal padding to fit small screens */
   box-sizing: border-box;
+  overflow: auto; /* content scrolls inside this element, bottom-nav stays fixed */
+  /* ensure content does not sit under the nav (nav height 56px on small screens) */
+  padding-bottom: calc(56px + 8px + env(safe-area-inset-bottom));
+  max-width: 450px; /* clamp width for phone-sized content */
+  margin: 0 auto; /* center on wider screens */
+  width: 100%;
 }
 
 /* Screen content */
 .screen {
-  max-width: 900px;
-  margin: 0 auto;
-}
-.screen h1 {
-  margin: 0 0 8px 0;
+  /* allow screen to fill the app width so header and lists use full width */
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  position: relative; /* needed so the add button can be positioned relative to the screen */
 }
 
-/* Bottom navigation */
+.screen-header {
+  display: flex;
+  justify-content: space-between; /* title left, button right */
+  align-items: flex-end; /* align on bottom edge */
+  gap: 0px;
+  margin: 0 0 8px 0;
+  height: 36px;
+}
+
+.screen-header h1 {
+  width: 100%;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Position add button inside the header and make it round and match header height */
+.screen-header .add-button {
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 50%; /* make it round */
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 60;
+  align-self: flex-end;
+}
+.screen-header .add-button i[data-feather] {
+  width: 16px;
+  height: 16px;
+  display: block;
+  stroke: currentColor;
+  stroke-width: 2.6;
+}
+
+/* Bottom navigation - opaque stationaty bar across bottom */
 .bottom-nav {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 12px;
+  bottom: 0; /* stick to bottom edge */
+  height: 56px;
   display: flex;
-  gap: 12px;
-  justify-content: center;
-  padding: 8px;
-  pointer-events: auto;
-}
-.bottom-nav .nav-button {
+  gap: 0;
+  justify-content: space-around; /* evenly space icons */
+  align-items: center;
+  padding: 6px calc(10px + env(safe-area-inset-left)) 6px
+    calc(10px + env(safe-area-inset-right));
   background: var(--surface-bg);
-  padding: 10px 16px;
-  border-radius: 999px;
+  border-top: var(--border);
+  box-shadow: none;
+  z-index: 30;
+  /* ensure it covers safe area on devices with home indicator */
+  padding-bottom: calc(6px + env(safe-area-inset-bottom));
+}
+
+.bottom-nav .nav-button {
+  /* make each nav item vertical: icon (if present) above a small label */
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
   color: var(--surface-on-muted);
   font-weight: 600;
-  border: var(--surface-border);
-}
-.bottom-nav .nav-button.active {
-  background: var(--accent);
-  color: var(--on-accent);
+  font-size: var(--fs-sm);
+  min-width: 46px;
 }
 
-/* keep keyboard focus visible without using shadows */
+.bottom-nav .nav-button.active {
+  color: var(--accent);
+}
+
+/* reduce visual chrome when focused */
 .bottom-nav .nav-button:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
   outline-offset: 2px;
-  box-shadow: none !important;
-}
-
-/* Make sure content has breathing room above nav on small screens */
-@media (max-width: 600px) {
-  #app {
-    padding-bottom: 84px;
-  }
-  .screen {
-    margin: 12px;
-  }
 }
 
 /* Error state */
@@ -133,41 +195,98 @@ body {
 .lists-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0; /* rows will have their own separators */
   margin-top: 12px;
+
+  /* card surface */
+  background: var(--surface-bg);
+  border: var(--border);
+  border-radius: 12px;
+  /* remove inner padding so row dividers reach container edges */
+  padding: 0;
+  width: 100%;
+  position: relative; /* allow positioned children (the add button) to align to the card edge */
 }
+
 .list-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 0 5px 0;
+  /* give rows their own horizontal padding; no radius so dividers are straight */
+  padding: 12px 16px;
   border-radius: 0;
   background: transparent;
   border: none;
+  gap: 12px;
+  /* subtle divider between rows */
+  border-bottom: var(--border);
+  font-size: var(--fs-md);
+  font-weight: 500;
 }
-.list-title {
-  font-weight: 600;
+.list-row:last-child {
+  border-bottom: none;
 }
+
+/* round the outer corners by applying radius to first/last rows so card keeps rounded corners */
+.list-row:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+.list-row:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border-bottom: none; /* ensure no divider under final row */
+}
+
+/* Built-in badge: small filled pill using accent tint for visibility */
+.badge {
+  padding: 3px 8px;
+  font-size: var(--fs-xs);
+  /* slightly rounded but not fully pill-shaped */
+  border-radius: calc(var(--radius) - 2px);
+  line-height: 1;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+}
+
+/* Duplicate as an outlined pill to match the mock */
+.list-row button.dup {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  padding: 6px 10px;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: var(--fs-xs);
+}
+.list-row button.dup:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* Ensure rows remain flat in dark mode as well */
+html[data-theme='dark'] .lists-container {
+  background: var(--surface-bg);
+  border: var(--border);
+}
+html[data-theme='dark'] .list-row {
+  border-bottom: var(--border);
+}
+html[data-theme='dark'] .badge {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+
 .list-meta {
   display: flex;
-  gap: 8px;
+  gap: 16px; /* increased gap so badge and duplicate button are more separated */
   align-items: center;
 }
-.badge {
-  background: transparent;
-  border: var(--badge-border);
-  padding: 2px 8px;
-  font-size: 12px;
-  color: var(--badge-color);
-  opacity: 0.95;
-  border-radius: 999px;
-  line-height: 1;
-}
-.list-row button.dup {
-  background: var(--accent);
-  color: var(--on-accent);
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
+
+/* Tweak: make the add button slightly smaller and the plus glyph thicker and white */
+/* leave .lists-container .add-button removed, use .screen .add-button instead */

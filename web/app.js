@@ -58,13 +58,57 @@ function setScreen(name) {
   updateNav();
 }
 
+// Load feather icons dynamically (lightweight CDN) and replace placeholders
+function loadFeather() {
+  return new Promise((resolve, reject) => {
+    if (window.feather) return resolve(window.feather);
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/feather-icons/dist/feather.min.js';
+    s.onload = () => resolve(window.feather);
+    s.onerror = (e) => reject(e);
+    document.head.appendChild(s);
+  });
+}
+function ensureIcons() {
+  return loadFeather()
+    .then((feather) => {
+      try {
+        feather.replace();
+      } catch (e) {
+        console.warn('feather.replace failed', e);
+      }
+    })
+    .catch((err) => console.warn('Failed to load icons', err));
+}
+
+function renderBottomNav() {
+  return `\n<nav class="bottom-nav">\n  <button data-screen="lists" class="nav-button"><i data-feather="list"></i><span class="nav-label">Lists</span></button>\n  <button data-screen="track" class="nav-button"><i data-feather="target"></i><span class="nav-label">Track</span></button>\n  <button data-screen="history" class="nav-button"><i data-feather="clock"></i><span class="nav-label">History</span></button>\n</nav>`;
+}
+
+// helper to ensure nav is appended as a sibling of #app (so fixed behaves correctly)
+function ensureBottomNav() {
+  // remove any existing nav
+  const existing = document.querySelector('.bottom-nav');
+  if (existing) existing.remove();
+  // append new nav to body so position:fixed anchors to viewport
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = renderBottomNav();
+  document.body.appendChild(wrapper.firstElementChild);
+}
+
 async function loadScreen(url) {
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to load ' + url);
-    const html = await res.text();
-    app.innerHTML = html + '\n' + renderBottomNav();
+    let html = await res.text();
+
+    // insert screen markup inside #app only
+    app.innerHTML = html;
+    // ensure bottom nav exists outside of #app
+    ensureBottomNav();
     attachNavHandlers();
+    // ensure icons rendered
+    ensureIcons();
     // Also load corresponding screen JS if it exists
     const jsPath = url.replace(/\.html$/, '') + '.js';
     const scr = document.createElement('script');
@@ -72,16 +116,11 @@ async function loadScreen(url) {
     scr.async = true;
     document.body.appendChild(scr);
   } catch (err) {
-    app.innerHTML =
-      '<div class="screen error">Error loading screen</div>' +
-      renderBottomNav();
+    app.innerHTML = '<div class="screen error">Error loading screen</div>';
+    ensureBottomNav();
     attachNavHandlers();
     console.error(err);
   }
-}
-
-function renderBottomNav() {
-  return `\n<nav class="bottom-nav">\n  <button data-screen="lists" class="nav-button">Lists</button>\n  <button data-screen="track" class="nav-button">Track</button>\n  <button data-screen="history" class="nav-button">History</button>\n</nav>`;
 }
 
 function attachNavHandlers() {
