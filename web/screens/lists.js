@@ -290,7 +290,9 @@
       <div class="list-detail-count">${count} item${
       count === 1 ? '' : 's'
     }</div>
-      <button class="drawer-action primary detail-start-session" type="button" aria-label="Start session for this list">
+      <button class="drawer-action primary detail-start-session" type="button" aria-label="Start session for this list" ${
+        count === 0 ? 'disabled' : ''
+      }>
         <span>Start Session</span><i data-feather="target"></i>
       </button>
     `;
@@ -759,11 +761,14 @@
     const drawer = document.createElement('div');
     drawer.className = 'list-drawer';
     drawer.setAttribute('data-id', list.id);
+    const itemCount = Array.isArray(list.items) ? list.items.length : 0;
 
     drawer.innerHTML = `
       <button class="drawer-action primary" data-action="start-track" data-id="${
         list.id
-      }" aria-label="Start tracking this list">
+      }" aria-label="Start tracking this list" ${
+      itemCount === 0 ? 'disabled' : ''
+    }>
         <span>Start Session</span><i data-feather="target"></i>
       </button>
       <button class="drawer-action" data-action="view-edit" data-id="${
@@ -777,7 +782,7 @@
       </button>
       <button class="drawer-action" data-action="duplicate" data-id="${
         list.id
-      }" aria-label="Duplicate list">
+      }" aria-label="Duplicate list" ${itemCount === 0 ? 'disabled' : ''}>
         <span>Duplicate</span><i data-feather="copy"></i>
       </button>
     `;
