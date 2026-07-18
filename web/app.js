@@ -47,14 +47,64 @@ const screens = {
   history: 'screens/history.html',
 };
 
+function normalizeScreenName(name) {
+  const normalized = String(name || '')
+    .trim()
+    .toLowerCase();
+  if (screens[normalized]) return normalized;
+  return null;
+}
+
+function getRouteParams() {
+  const params = new URLSearchParams(location.search);
+  return {
+    page: normalizeScreenName(params.get('page')),
+    view: String(params.get('view') || '')
+      .trim()
+      .toLowerCase(),
+    mode: String(params.get('mode') || '')
+      .trim()
+      .toLowerCase(),
+    listId: String(params.get('listId') || params.get('list') || '').trim(),
+    theme: String(params.get('theme') || '')
+      .trim()
+      .toLowerCase(),
+  };
+}
+
+function syncUrlForScreen(screenName, routeParams = {}) {
+  try {
+    const params = new URLSearchParams(location.search);
+    params.set('page', screenName);
+    params.delete('view');
+    params.delete('mode');
+    params.delete('listId');
+    params.delete('list');
+    Object.entries(routeParams || {}).forEach(([k, v]) => {
+      const key = String(k || '').trim();
+      if (!key) return;
+      const value = String(v ?? '').trim();
+      if (!value) return;
+      params.set(key, value);
+    });
+    const next = `${location.pathname}?${params.toString()}`;
+    history.replaceState(null, '', next);
+  } catch (e) {
+    console.warn('URL sync failed', e);
+  }
+}
+
 let state = {
-  current: 'lists',
+  current: getRouteParams().page || 'lists',
 };
 
-function setScreen(name) {
-  if (!screens[name]) return;
-  state.current = name;
-  loadScreen(screens[name]);
+function setScreen(name, options = {}) {
+  const target = normalizeScreenName(name);
+  if (!target) return;
+  state.current = target;
+  if (!options.skipUrlSync)
+    syncUrlForScreen(target, options.routeParams || undefined);
+  loadScreen(screens[target]);
   updateNav();
 }
 
@@ -143,13 +193,13 @@ function updateNav() {
 // initialize after repository is ready
 loadRepository()
   .then(() => {
-    setScreen(state.current);
+    setScreen(state.current, { skipUrlSync: true });
   })
   .catch((err) => {
     console.error('Failed to load repository', err);
     // still try to load UI
-    setScreen(state.current);
+    setScreen(state.current, { skipUrlSync: true });
   });
 
 // expose for debugging
-window._obs = { setScreen, state };
+window._obs = { setScreen, state, getRouteParams };

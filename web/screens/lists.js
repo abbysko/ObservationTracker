@@ -12,6 +12,25 @@
   let sortMode = 'default';
   let sortMenuOpen = false;
 
+  function syncListsRoute(listId) {
+    try {
+      const params = new URLSearchParams(location.search);
+      params.set('page', 'lists');
+      params.delete('view');
+      params.delete('mode');
+      params.delete('list');
+      if (listId) params.set('listId', listId);
+      else params.delete('listId');
+      history.replaceState(
+        null,
+        '',
+        `${location.pathname}?${params.toString()}`
+      );
+    } catch (err) {
+      console.warn('Failed to sync lists route', err);
+    }
+  }
+
   async function rerenderFromRepository() {
     const lists = await window.repository.loadLists();
     await render(lists);
@@ -23,7 +42,11 @@
     sessionStorage.setItem('ot_active_list_name', list.name);
     sessionStorage.setItem('ot_list_action', 'start-track');
     if (window._obs && typeof window._obs.setScreen === 'function') {
-      window._obs.setScreen('track');
+      window._obs.setScreen('track', {
+        routeParams: {
+          listId: list.id,
+        },
+      });
       return true;
     }
     return false;
@@ -49,6 +72,7 @@
       detailListId = null;
       selectedDetailItemIndex = null;
       editingDetailItemIndex = null;
+      syncListsRoute(null);
     }
 
     container.classList.remove('list-detail-mode');
@@ -331,6 +355,7 @@
         detailListId = null;
         selectedDetailItemIndex = null;
         editingDetailItemIndex = null;
+        syncListsRoute(null);
         const refreshed = await window.repository.loadLists();
         render(refreshed);
       });
@@ -908,6 +933,7 @@
           editingListId = null;
           selectedDetailItemIndex = null;
           editingDetailItemIndex = null;
+          syncListsRoute(list.id);
           const refreshed = await window.repository.loadLists();
           render(refreshed);
           return;
@@ -950,9 +976,32 @@
     );
   }
 
+  function applyRouteState(lists) {
+    const route =
+      window._obs && typeof window._obs.getRouteParams === 'function'
+        ? window._obs.getRouteParams()
+        : null;
+    if (!route || route.page !== 'lists') return;
+
+    const routeListId = String(route.listId || '').trim();
+    if (!routeListId) return;
+
+    const target = lists.find((x) => x.id === routeListId);
+    if (!target) return;
+
+    selectedListId = target.id;
+    viewMode = 'detail';
+    detailListId = target.id;
+    sortMenuOpen = false;
+    editingListId = null;
+    selectedDetailItemIndex = null;
+    editingDetailItemIndex = null;
+  }
+
   // bootstrap when script loads
   (async () => {
     const lists = await window.repository.loadLists();
+    applyRouteState(lists);
     render(lists);
   })();
 })();

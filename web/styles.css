@@ -650,3 +650,134 @@ html[data-theme='dark'] .list-drawer {
   outline: none;
   border-color: var(--accent);
 }
+
+/* Track screen states */
+.track-picker-card {
+  padding: 12px;
+}
+
+.track-picker-wrap {
+  position: relative;
+  z-index: 20;
+}
+
+.track-picker-label {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.track-picker-toggle {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-color));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+  padding: 7px 10px;
+  display: block;
+  text-align: left;
+  cursor: pointer;
+}
+
+.track-picker-toggle:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.track-picker-selected-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.track-picker-selected-right svg.feather {
+  width: 16px;
+  height: 16px;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+
+.track-picker-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin-top: 0;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-bg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow: auto;
+  z-index: 40;
+}
+
+html[data-theme='dark'] .track-picker-menu {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.track-picker-option {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  border-radius: calc(var(--radius) - 3px);
+  padding: 7px 10px;
+  display: block;
+  cursor: pointer;
+}
+
+.track-picker-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.track-picker-option-name {
+  font-size: var(--fs-md);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-picker-option-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.track-picker-option:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.track-picker-option.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.track-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.track-start-button {
+  flex: 0 0 auto;
+}
+
+.track-empty {
+  padding: 14px;
+  color: var(--muted);
+  font-size: var(--fs-md);
+}
+
+.track-active-body {
+  margin-top: 12px;
+  min-height: 180px;
+}
