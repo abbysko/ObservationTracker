@@ -309,12 +309,16 @@ body {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.list-title.editable {
+.list-title.editable,
+.breadcrumb-current.editable,
+.detail-item-label.editable {
   cursor: text;
   border-bottom: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
-.list-title-input {
+.list-title-input,
+.detail-breadcrumb-input,
+.detail-item-input {
   width: 100%;
   max-width: 100%;
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
@@ -322,12 +326,18 @@ body {
   background: var(--surface-bg);
   color: var(--text);
   font-size: inherit;
-  font-weight: inherit;
   line-height: 1.2;
   padding: 2px 6px;
 }
 
-.list-title-input:focus {
+.list-title-input,
+.detail-breadcrumb-input {
+  font-weight: inherit;
+}
+
+.list-title-input:focus,
+.detail-breadcrumb-input:focus,
+.detail-item-input:focus {
   outline: none;
   border-color: var(--accent);
 }
@@ -395,10 +405,6 @@ body {
   background: color-mix(in srgb, var(--accent) 88%, black);
 }
 
-.drawer-action.destructive {
-  color: var(--accent);
-}
-
 .drawer-action:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -424,9 +430,6 @@ body {
 html[data-theme='dark'] .lists-container {
   background: var(--surface-bg);
   border: var(--border);
-}
-html[data-theme='dark'] .list-row {
-  border-bottom: none;
 }
 html[data-theme='dark'] .badge {
   background: color-mix(in srgb, var(--accent) 8%, transparent);
@@ -457,7 +460,8 @@ html[data-theme='dark'] .list-drawer {
   align-self: center;
 }
 
-.row-delete {
+.row-delete,
+.detail-item-delete {
   border: none;
   background: transparent;
   color: var(--accent);
@@ -465,11 +469,16 @@ html[data-theme='dark'] .list-drawer {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
   cursor: pointer;
 }
 
-.row-delete svg.feather {
+.row-delete {
+  line-height: 1;
+}
+
+.row-delete svg.feather,
+.detail-item-grip svg.feather,
+.detail-item-delete svg.feather {
   width: var(--fs-md);
   height: var(--fs-md);
   stroke: currentColor;
@@ -511,27 +520,8 @@ html[data-theme='dark'] .list-drawer {
   color: var(--text);
 }
 
-.breadcrumb-current.editable {
-  cursor: text;
-  border-bottom: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
 .detail-breadcrumb-input {
   min-width: 0;
-  max-width: 100%;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  border-radius: calc(var(--radius) - 3px);
-  background: var(--surface-bg);
-  color: var(--text);
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: 1.2;
-  padding: 2px 6px;
-}
-
-.detail-breadcrumb-input:focus {
-  outline: none;
-  border-color: var(--accent);
 }
 
 .list-detail-card {
@@ -627,55 +617,12 @@ html[data-theme='dark'] .list-drawer {
   cursor: grabbing;
 }
 
-.detail-item-grip svg.feather {
-  width: var(--fs-md);
-  height: var(--fs-md);
-  stroke: currentColor;
-  stroke-width: 2;
-}
-
 .detail-item-label {
   display: inline-block;
 }
 
-.detail-item-label.editable {
-  cursor: text;
-  border-bottom: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-.detail-item-input {
-  width: 100%;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  border-radius: calc(var(--radius) - 3px);
-  background: var(--surface-bg);
-  color: var(--text);
-  font-size: inherit;
-  line-height: 1.2;
-  padding: 2px 6px;
-}
-
-.detail-item-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
 .detail-item-delete {
-  border: none;
-  background: transparent;
-  color: var(--accent);
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
   flex: 0 0 auto;
-}
-
-.detail-item-delete svg.feather {
-  width: var(--fs-md);
-  height: var(--fs-md);
-  stroke: currentColor;
-  stroke-width: 2;
 }
 
 .list-detail-empty {
@@ -703,6 +650,3 @@ html[data-theme='dark'] .list-drawer {
   outline: none;
   border-color: var(--accent);
 }
-
-/* Tweak: make the add button slightly smaller and the plus glyph thicker and white */
-/* leave .lists-container .add-button removed, use .screen .add-button instead */

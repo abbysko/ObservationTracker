@@ -12,6 +12,23 @@
   let sortMode = 'default';
   let sortMenuOpen = false;
 
+  async function rerenderFromRepository() {
+    const lists = await window.repository.loadLists();
+    await render(lists);
+  }
+
+  function startSessionForList(list) {
+    if (!list) return false;
+    sessionStorage.setItem('ot_active_list_id', list.id);
+    sessionStorage.setItem('ot_active_list_name', list.name);
+    sessionStorage.setItem('ot_list_action', 'start-track');
+    if (window._obs && typeof window._obs.setScreen === 'function') {
+      window._obs.setScreen('track');
+      return true;
+    }
+    return false;
+  }
+
   async function render(lists) {
     const container = document.querySelector('.screen-lists');
     if (!container) return;
@@ -149,8 +166,7 @@
     sortToggle.addEventListener('click', async (e) => {
       e.stopPropagation();
       sortMenuOpen = !sortMenuOpen;
-      const refreshed = await window.repository.loadLists();
-      render(refreshed);
+      await rerenderFromRepository();
     });
 
     document.querySelectorAll('.sort-option').forEach((option) => {
@@ -158,8 +174,7 @@
         e.stopPropagation();
         sortMode = option.getAttribute('data-sort') || 'default';
         sortMenuOpen = false;
-        const refreshed = await window.repository.loadLists();
-        render(refreshed);
+        await rerenderFromRepository();
       });
     });
 
@@ -186,10 +201,9 @@
         items: [],
       };
       await window.repository.saveList(newList);
-      const refreshed = await window.repository.loadLists();
       selectedListId = newList.id;
       editingListId = newList.id;
-      render(refreshed);
+      await rerenderFromRepository();
     });
   }
 
@@ -421,12 +435,7 @@
     const detailStart = container.querySelector('.detail-start-session');
     if (detailStart) {
       detailStart.addEventListener('click', () => {
-        sessionStorage.setItem('ot_active_list_id', list.id);
-        sessionStorage.setItem('ot_active_list_name', list.name);
-        sessionStorage.setItem('ot_list_action', 'start-track');
-        if (window._obs && typeof window._obs.setScreen === 'function') {
-          window._obs.setScreen('track');
-        }
+        startSessionForList(list);
       });
     }
 
@@ -726,8 +735,7 @@
   async function dismissSortMenu() {
     if (!sortMenuOpen) return;
     sortMenuOpen = false;
-    const refreshed = await window.repository.loadLists();
-    render(refreshed);
+    await rerenderFromRepository();
   }
 
   function sortLists(lists, mode) {
@@ -888,11 +896,7 @@
         if (!list) return;
 
         if (action === 'start-track') {
-          sessionStorage.setItem('ot_active_list_id', list.id);
-          sessionStorage.setItem('ot_active_list_name', list.name);
-          sessionStorage.setItem('ot_list_action', 'start-track');
-          if (window._obs && typeof window._obs.setScreen === 'function') {
-            window._obs.setScreen('track');
+          if (startSessionForList(list)) {
             return;
           }
         }
