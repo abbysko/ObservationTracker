@@ -188,6 +188,7 @@
       await window.repository.saveList(newList);
       const refreshed = await window.repository.loadLists();
       selectedListId = newList.id;
+      editingListId = newList.id;
       render(refreshed);
     });
   }
@@ -760,13 +761,23 @@
     drawer.setAttribute('data-id', list.id);
 
     drawer.innerHTML = `
-      <button class="drawer-action primary" data-action="start-track" data-id="${list.id}" aria-label="Start tracking this list">
+      <button class="drawer-action primary" data-action="start-track" data-id="${
+        list.id
+      }" aria-label="Start tracking this list">
         <span>Start Session</span><i data-feather="target"></i>
       </button>
-      <button class="drawer-action" data-action="view-edit" data-id="${list.id}" aria-label="View and edit this list">
-        <span>Edit Items</span><i data-feather="edit-3"></i>
+      <button class="drawer-action" data-action="view-edit" data-id="${
+        list.id
+      }" aria-label="${
+      list.builtIn ? 'View items in this list' : 'View and edit this list'
+    }">
+        <span>${
+          list.builtIn ? 'View Items' : 'Edit Items'
+        }</span><i data-feather="edit-3"></i>
       </button>
-      <button class="drawer-action" data-action="duplicate" data-id="${list.id}" aria-label="Duplicate list">
+      <button class="drawer-action" data-action="duplicate" data-id="${
+        list.id
+      }" aria-label="Duplicate list">
         <span>Duplicate</span><i data-feather="copy"></i>
       </button>
     `;
