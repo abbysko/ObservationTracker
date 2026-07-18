@@ -10,12 +10,29 @@ This repository contains:
 
 ## Getting started (developer quick start)
 
-1. Start the web dev server:
+1. Install dependencies:
+   - Run: `npm install`
+   - Note: `postinstall` runs `npm run sync:vendor` to copy local runtime bundles into `web/vendor`.
+2. Start the web dev server:
    - Using the included npm script (recommended):
      - Run: `npm start` (this runs `npx http-server ./web -c-1 -p 8080`)
    - Or with npx directly: `npx http-server ./web -c-1 -p 8080`
    - Or with Python 3: `python -m http.server 8080 --directory web`
-2. Open the app at `http://localhost:8080` (port may vary).
+3. Open the app at `http://localhost:8080` (port may vary).
+
+### Testing page routes and view state
+
+- Open a specific tab with `page`:
+  - Lists: `http://localhost:8080/?page=lists`
+  - Track: `http://localhost:8080/?page=track`
+  - History: `http://localhost:8080/?page=history`
+- Deep-link Lists detail/items view using `listId`:
+  - Example: `http://localhost:8080/?page=lists&listId=builtin-car-makes`
+- Deep-link active Track state using `listId`:
+  - Example: `http://localhost:8080/?page=track&listId=builtin-car-makes`
+- In-app navigation keeps URL state in sync for these flows:
+  - Lists detail open/close updates `listId`
+  - Track start/end session updates `listId`
 
 ### Testing themes / dark mode
 
@@ -52,7 +69,9 @@ How to use these docs
 
 ## Notes
 
-- Persist data using the repository interfaces described in `docs/Repository.md`. For web development, use IndexedDB.
+- Current web persistence implementation uses `localStorage` for custom lists and session context.
+- Built-in lists are loaded from `web/data/builtins.json`.
+- Repository interfaces and longer-term storage goals are documented in `docs/Repository.md`.
 - When ready to wrap for iOS, embed the web build in a minimal SwiftUI app using `WKWebView` and implement a small native repository bridge.
 
 ## Contributing
