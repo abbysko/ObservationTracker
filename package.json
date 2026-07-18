@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "start": "npx http-server ./web -c-1 -p 8080",
-    "format": "prettier --write \"**/*.{js,css,md,json}\""
+    "format": "prettier --write \"**/*.{js,css,md,json}\"",
+    "sync:vendor": "node scripts/sync-vendor.mjs",
+    "postinstall": "node scripts/sync-vendor.mjs"
   },
   "devDependencies": {
-    "prettier": "2.8.8"
+    "feather-icons": "^4.29.2",
+    "prettier": "2.8.8",
+    "sortablejs": "^1.15.7"
   }
 }

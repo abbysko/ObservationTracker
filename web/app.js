@@ -63,7 +63,7 @@ function loadFeather() {
   return new Promise((resolve, reject) => {
     if (window.feather) return resolve(window.feather);
     const s = document.createElement('script');
-    s.src = 'https://unpkg.com/feather-icons/dist/feather.min.js';
+    s.src = 'vendor/feather.min.js';
     s.onload = () => resolve(window.feather);
     s.onerror = (e) => reject(e);
     document.head.appendChild(s);
