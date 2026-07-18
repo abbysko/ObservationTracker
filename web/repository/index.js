@@ -22,10 +22,14 @@
   function saveList(list) {
     const raw = localStorage.getItem(KEY_LISTS);
     const custom = raw ? JSON.parse(raw) : [];
+    const toSave = {
+      ...list,
+      updatedAt: Date.now(),
+    };
     // if list is builtIn, push as a new custom copy (caller should have duplicated)
-    const idx = custom.findIndex((l) => l.id === list.id);
-    if (idx >= 0) custom[idx] = list;
-    else custom.push(list);
+    const idx = custom.findIndex((l) => l.id === toSave.id);
+    if (idx >= 0) custom[idx] = toSave;
+    else custom.push(toSave);
     localStorage.setItem(KEY_LISTS, JSON.stringify(custom));
     return Promise.resolve();
   }

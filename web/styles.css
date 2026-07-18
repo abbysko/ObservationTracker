@@ -111,6 +111,76 @@ body {
   margin: 0;
 }
 
+.screen-header .header-controls {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.screen-header .sort-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.screen-header .sort-toggle {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.screen-header .sort-toggle:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.screen-header .sort-toggle svg.feather {
+  width: 30px;
+  height: 30px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.screen-header .sort-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 140px;
+  padding: 6px;
+  border-radius: var(--radius);
+  border: var(--border);
+  background: var(--surface-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 80;
+}
+
+.screen-header .sort-option {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 7px 8px;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.screen-header .sort-option:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.screen-header .sort-option.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
 /* Position add button inside the header and make it round and match header height */
 .screen-header .add-button {
   flex: 0 0 36px;
@@ -130,7 +200,7 @@ body {
   z-index: 60;
   align-self: flex-end;
 }
-.screen-header .add-button i[data-feather] {
+.screen-header .add-button svg.feather {
   width: 16px;
   height: 16px;
   display: block;
@@ -208,6 +278,13 @@ body {
   position: relative; /* allow positioned children (the add button) to align to the card edge */
 }
 
+.list-item {
+  border-bottom: var(--border);
+}
+.list-item:last-child {
+  border-bottom: none;
+}
+
 .list-row {
   display: flex;
   justify-content: space-between;
@@ -218,24 +295,90 @@ body {
   background: transparent;
   border: none;
   gap: 12px;
-  /* subtle divider between rows */
-  border-bottom: var(--border);
   font-size: var(--fs-md);
   font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
-.list-row:last-child {
-  border-bottom: none;
+
+.list-row:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.list-row.selected {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 /* round the outer corners by applying radius to first/last rows so card keeps rounded corners */
-.list-row:first-child {
+.list-item:first-child .list-row {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
-.list-row:last-child {
+
+.list-item:last-child .list-row {
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
-  border-bottom: none; /* ensure no divider under final row */
+}
+
+.list-item.expanded:last-child .list-row {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.list-drawer {
+  display: flex;
+  gap: 8px;
+  padding: 4px 12px 10px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.list-item:last-child .list-drawer {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.drawer-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  padding: 6px 8px;
+  font-size: var(--fs-sm);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.drawer-action svg.feather {
+  width: var(--fs-sm);
+  height: var(--fs-sm);
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.drawer-action:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.drawer-action.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: none;
+}
+
+.drawer-action.primary:hover {
+  background: color-mix(in srgb, var(--accent) 88%, black);
+}
+
+.drawer-action.destructive {
+  color: var(--accent);
+}
+
+.drawer-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* Built-in badge: small filled pill using accent tint for visibility */
@@ -254,37 +397,30 @@ body {
   color: var(--accent);
 }
 
-/* Duplicate as an outlined pill to match the mock */
-.list-row button.dup {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  padding: 6px 10px;
-  border-radius: calc(var(--radius) - 2px);
-  cursor: pointer;
-  font-weight: 500;
-  font-size: var(--fs-xs);
-}
-.list-row button.dup:hover {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
 /* Ensure rows remain flat in dark mode as well */
 html[data-theme='dark'] .lists-container {
   background: var(--surface-bg);
   border: var(--border);
 }
 html[data-theme='dark'] .list-row {
-  border-bottom: var(--border);
+  border-bottom: none;
 }
 html[data-theme='dark'] .badge {
   background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent);
 }
 
+html[data-theme='dark'] .list-item {
+  border-bottom: var(--border);
+}
+
+html[data-theme='dark'] .list-drawer {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-bg));
+}
+
 .list-meta {
   display: flex;
-  gap: 16px; /* increased gap so badge and duplicate button are more separated */
+  gap: 16px;
   align-items: center;
 }
 
