@@ -2,6 +2,74 @@
 console.log('ObservationTracker starting');
 const app = document.getElementById('app');
 
+let breadcrumbFitRaf = null;
+
+function fitDetailBreadcrumb(el) {
+  if (!el || !(el instanceof HTMLElement)) return;
+  if (el.querySelector('input, textarea, select')) {
+    el.style.removeProperty('font-size');
+    return;
+  }
+
+  const computed = getComputedStyle(el);
+  const baseFontSize = Number.parseFloat(
+    el.dataset.baseBreadcrumbFontSize || computed.fontSize || '0'
+  );
+  const minFontSize = 12;
+  if (!Number.isFinite(baseFontSize) || baseFontSize <= 0) return;
+
+  if (!el.dataset.baseBreadcrumbFontSize) {
+    el.dataset.baseBreadcrumbFontSize = String(baseFontSize);
+  }
+
+  el.style.fontSize = `${baseFontSize}px`;
+
+  if (el.clientWidth <= 0) return;
+  if (el.scrollWidth <= el.clientWidth + 0.5) return;
+
+  let size = baseFontSize;
+  while (size > minFontSize && el.scrollWidth > el.clientWidth + 0.5) {
+    size = Math.max(minFontSize, size - 0.5);
+    el.style.fontSize = `${size}px`;
+    if (size === minFontSize) break;
+  }
+}
+
+function fitAllDetailBreadcrumbs(root = document) {
+  const scope = root && root.querySelectorAll ? root : document;
+  scope.querySelectorAll('.detail-breadcrumb').forEach((el) => {
+    fitDetailBreadcrumb(el);
+  });
+}
+
+function scheduleDetailBreadcrumbFit(root = document) {
+  if (breadcrumbFitRaf) cancelAnimationFrame(breadcrumbFitRaf);
+  breadcrumbFitRaf = requestAnimationFrame(() => {
+    breadcrumbFitRaf = null;
+    fitAllDetailBreadcrumbs(root);
+  });
+}
+
+function initDetailBreadcrumbAutoFit() {
+  if (!app) return;
+
+  const observer = new MutationObserver(() => {
+    scheduleDetailBreadcrumbFit(app);
+  });
+
+  observer.observe(app, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+
+  window.addEventListener('resize', () => {
+    scheduleDetailBreadcrumbFit(app);
+  });
+
+  scheduleDetailBreadcrumbFit(app);
+}
+
 // Load repository implementation (exposes window.repository)
 function loadRepository() {
   return new Promise((resolve, reject) => {
@@ -194,6 +262,7 @@ async function loadScreen(url) {
     attachNavHandlers();
     // ensure icons rendered
     ensureIcons();
+    scheduleDetailBreadcrumbFit(app);
     // Also load corresponding screen JS if it exists
     const jsPath = url.replace(/\.html$/, '') + '.js';
     const scr = document.createElement('script');
@@ -226,6 +295,8 @@ function updateNav() {
 }
 
 // initialize after repository is ready
+initDetailBreadcrumbAutoFit();
+
 loadRepository()
   .then(() => {
     setScreen(state.current, { skipUrlSync: true, silentLock: true });
@@ -237,4 +308,9 @@ loadRepository()
   });
 
 // expose for debugging
-window._obs = { setScreen, state, getRouteParams };
+window._obs = {
+  setScreen,
+  state,
+  getRouteParams,
+  fitDetailBreadcrumbs: () => scheduleDetailBreadcrumbFit(app),
+};

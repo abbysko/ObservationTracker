@@ -14,6 +14,10 @@ const vendorFiles = [
     from: resolve(root, 'node_modules/sortablejs/Sortable.min.js'),
     to: resolve(root, 'web/vendor/Sortable.min.js'),
   },
+  {
+    from: resolve(root, 'node_modules/chart.js/dist/chart.umd.min.js'),
+    to: resolve(root, 'web/vendor/chart.umd.min.js'),
+  },
 ];
 
 mkdirSync(resolve(root, 'web/vendor'), { recursive: true });

@@ -12,6 +12,54 @@
   let sortMode = 'default';
   let sortMenuOpen = false;
 
+  function normalizeRenameValue(rawValue) {
+    const value = String(rawValue || '').trim();
+    const nonWhitespaceLength = value.replace(/\s/g, '').length;
+
+    if (nonWhitespaceLength <= 1) {
+      return {
+        ok: false,
+        message: 'Name must be at least 2 non-whitespace characters.',
+      };
+    }
+
+    if (value.length >= 30) {
+      return {
+        ok: false,
+        message: 'Name must be fewer than 30 characters.',
+      };
+    }
+
+    return {
+      ok: true,
+      value,
+    };
+  }
+
+  function normalizeNameKey(value) {
+    return String(value || '')
+      .trim()
+      .toLocaleLowerCase();
+  }
+
+  function hasDuplicateListName(lists, candidateName, excludeId) {
+    const targetKey = normalizeNameKey(candidateName);
+    return (Array.isArray(lists) ? lists : []).some(
+      (list) =>
+        String(list?.id || '') !== String(excludeId || '') &&
+        normalizeNameKey(list?.name || '') === targetKey
+    );
+  }
+
+  function hasDuplicateItemName(items, candidateName, excludeIndex) {
+    const targetKey = normalizeNameKey(candidateName);
+    return (Array.isArray(items) ? items : []).some((item, idx) => {
+      if (idx === excludeIndex) return false;
+      const name = typeof item === 'string' ? item : item?.name || '';
+      return normalizeNameKey(name) === targetKey;
+    });
+  }
+
   function syncListsRoute(listId) {
     try {
       const params = new URLSearchParams(location.search);
@@ -376,15 +424,43 @@
     const breadcrumbInput = container.querySelector('.detail-breadcrumb-input');
     if (breadcrumbInput) {
       let done = false;
+      let skipNextBlurSave = false;
 
       const finalizeBreadcrumbRename = async (shouldSave) => {
         if (done) return;
-        done = true;
 
         if (shouldSave) {
-          const nextName = breadcrumbInput.value.trim();
+          const normalized = normalizeRenameValue(breadcrumbInput.value);
+          if (!normalized.ok) {
+            skipNextBlurSave = true;
+            window.alert(normalized.message);
+            setTimeout(() => {
+              try {
+                breadcrumbInput.focus();
+                breadcrumbInput.select();
+              } catch (err) {
+                console.warn('Failed to refocus breadcrumb input', err);
+              }
+            }, 0);
+            return;
+          }
+
+          const nextName = normalized.value;
           if (nextName) {
             const refreshed = await window.repository.loadLists();
+            if (hasDuplicateListName(refreshed, nextName, detailListId)) {
+              skipNextBlurSave = true;
+              window.alert('List name must be unique.');
+              setTimeout(() => {
+                try {
+                  breadcrumbInput.focus();
+                  breadcrumbInput.select();
+                } catch (err) {
+                  console.warn('Failed to refocus breadcrumb input', err);
+                }
+              }, 0);
+              return;
+            }
             const nextList = refreshed.find((x) => x.id === detailListId);
             if (nextList && !nextList.builtIn) {
               nextList.name = nextName;
@@ -392,6 +468,8 @@
             }
           }
         }
+
+        done = true;
 
         editingListId = null;
         const refreshed2 = await window.repository.loadLists();
@@ -409,6 +487,10 @@
         }
       });
       breadcrumbInput.addEventListener('blur', async () => {
+        if (skipNextBlurSave) {
+          skipNextBlurSave = false;
+          return;
+        }
         await finalizeBreadcrumbRename(true);
       });
 
@@ -671,13 +753,28 @@
     container.querySelectorAll('.detail-item-input').forEach((input) => {
       const index = Number(input.getAttribute('data-item-index'));
       let done = false;
+      let skipNextBlurSave = false;
 
       const finalize = async (shouldSave) => {
         if (done) return;
-        done = true;
 
         if (shouldSave && !Number.isNaN(index)) {
-          const nextName = input.value.trim();
+          const normalized = normalizeRenameValue(input.value);
+          if (!normalized.ok) {
+            skipNextBlurSave = true;
+            window.alert(normalized.message);
+            setTimeout(() => {
+              try {
+                input.focus();
+                input.select();
+              } catch (err) {
+                console.warn('Failed to refocus detail item input', err);
+              }
+            }, 0);
+            return;
+          }
+
+          const nextName = normalized.value;
           if (nextName) {
             const lists = await window.repository.loadLists();
             const nextList = lists.find((x) => x.id === detailListId);
@@ -687,6 +784,19 @@
               Array.isArray(nextList.items)
             ) {
               const nextItems = [...nextList.items];
+              if (hasDuplicateItemName(nextItems, nextName, index)) {
+                skipNextBlurSave = true;
+                window.alert('Item name must be unique within this list.');
+                setTimeout(() => {
+                  try {
+                    input.focus();
+                    input.select();
+                  } catch (err) {
+                    console.warn('Failed to refocus detail item input', err);
+                  }
+                }, 0);
+                return;
+              }
               const existing = nextItems[index];
               if (typeof existing === 'string') nextItems[index] = nextName;
               else if (existing && typeof existing === 'object') {
@@ -700,6 +810,8 @@
             }
           }
         }
+
+        done = true;
 
         editingDetailItemIndex = null;
         await reload();
@@ -716,6 +828,10 @@
         }
       });
       input.addEventListener('blur', async () => {
+        if (skipNextBlurSave) {
+          skipNextBlurSave = false;
+          return;
+        }
         await finalize(true);
       });
 
@@ -846,15 +962,43 @@
     document.querySelectorAll('.list-title-input').forEach((input) => {
       const id = input.getAttribute('data-id');
       let done = false;
+      let skipNextBlurSave = false;
 
       const finalize = async (shouldSave) => {
         if (done) return;
-        done = true;
 
         if (shouldSave) {
-          const nextName = input.value.trim();
+          const normalized = normalizeRenameValue(input.value);
+          if (!normalized.ok) {
+            skipNextBlurSave = true;
+            window.alert(normalized.message);
+            setTimeout(() => {
+              try {
+                input.focus();
+                input.select();
+              } catch (err) {
+                console.warn('Failed to refocus inline title input', err);
+              }
+            }, 0);
+            return;
+          }
+
+          const nextName = normalized.value;
           if (nextName) {
             const lists = await window.repository.loadLists();
+            if (hasDuplicateListName(lists, nextName, id)) {
+              skipNextBlurSave = true;
+              window.alert('List name must be unique.');
+              setTimeout(() => {
+                try {
+                  input.focus();
+                  input.select();
+                } catch (err) {
+                  console.warn('Failed to refocus inline title input', err);
+                }
+              }, 0);
+              return;
+            }
             const list = lists.find((x) => x.id === id);
             if (list && !list.builtIn) {
               list.name = nextName;
@@ -862,6 +1006,8 @@
             }
           }
         }
+
+        done = true;
 
         editingListId = null;
         const refreshed = await window.repository.loadLists();
@@ -879,6 +1025,10 @@
         }
       });
       input.addEventListener('blur', async () => {
+        if (skipNextBlurSave) {
+          skipNextBlurSave = false;
+          return;
+        }
         await finalize(true);
       });
 
