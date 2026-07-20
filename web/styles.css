@@ -908,3 +908,41 @@ html[data-theme='dark'] .track-picker-menu {
 .track-summary-line {
   white-space: nowrap;
 }
+
+.session-exit-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 120;
+}
+
+.session-exit-dialog {
+  width: min(360px, 100%);
+  background: var(--surface-bg);
+  border: var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-exit-title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.session-exit-copy {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.session-exit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

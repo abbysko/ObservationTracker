@@ -6,6 +6,8 @@
   let chooserSelectedListId = null;
   let chooserMenuOpen = false;
   let routeStateApplied = false;
+  let handleExitRequest = null;
+  let activeExitDialog = null;
 
   function escapeHtml(s) {
     return String(s)
@@ -126,11 +128,7 @@
     };
   }
 
-  async function endActiveSession(list, normalized, counts) {
-    const shouldSave = window.confirm(
-      'End session?\n\nChoose OK to Save, or Cancel to Abandon.'
-    );
-
+  async function completeActiveSession(list, normalized, counts, shouldSave) {
     if (
       shouldSave &&
       typeof window.repository.saveHistorySession === 'function'
@@ -138,9 +136,64 @@
       const sessionEntry = buildSessionEntry(list, normalized, counts);
       await window.repository.saveHistorySession(sessionEntry);
     }
-
     clearTrackCounts(list.id);
     clearActiveTrackingList();
+  }
+
+  function showActiveSessionExitDialog() {
+    if (activeExitDialog) return activeExitDialog;
+
+    activeExitDialog = new Promise((resolve) => {
+      const backdrop = document.createElement('div');
+      backdrop.className = 'session-exit-backdrop';
+      backdrop.innerHTML = `
+        <div class="session-exit-dialog" role="dialog" aria-modal="true" aria-label="Leave active session">
+          <div class="session-exit-title">Leave active session?</div>
+          <div class="session-exit-copy">Choose how to proceed.</div>
+          <div class="session-exit-actions">
+            <button type="button" class="drawer-action" data-choice="keep">Oops, keep tracking</button>
+            <button type="button" class="drawer-action primary" data-choice="save">Stop tracking and save</button>
+            <button type="button" class="drawer-action" data-choice="clear">Stop tracking and clear data</button>
+          </div>
+        </div>
+      `;
+
+      const close = (choice) => {
+        backdrop.remove();
+        activeExitDialog = null;
+        resolve(choice);
+      };
+
+      backdrop.querySelectorAll('[data-choice]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          close(btn.getAttribute('data-choice'));
+        });
+      });
+
+      document.body.appendChild(backdrop);
+    });
+
+    return activeExitDialog;
+  }
+
+  async function requestActiveSessionExit(
+    list,
+    normalized,
+    counts,
+    targetScreen
+  ) {
+    const choice = await showActiveSessionExitDialog();
+    if (choice === 'keep' || !choice) return;
+
+    await completeActiveSession(list, normalized, counts, choice === 'save');
+
+    if (targetScreen && targetScreen !== 'track') {
+      if (window._obs && typeof window._obs.setScreen === 'function') {
+        window._obs.setScreen(targetScreen);
+        return;
+      }
+    }
+
     syncTrackRoute(null);
     await renderTrackState();
   }
@@ -185,8 +238,7 @@
       return;
     }
 
-    // No listId in route means chooser/main state.
-    clearActiveTrackingList();
+    // If route has no listId, keep current session state (if any).
   }
 
   async function dismissChooserMenu() {
@@ -277,7 +329,7 @@
     if (root) {
       root.addEventListener('click', async (e) => {
         e.preventDefault();
-        await endActiveSession(list, normalized, counts);
+        await requestActiveSessionExit(list, normalized, counts, 'track');
       });
     }
 
@@ -336,7 +388,7 @@
 
     if (endSessionButton) {
       endSessionButton.addEventListener('click', async () => {
-        await endActiveSession(list, normalized, counts);
+        await requestActiveSessionExit(list, normalized, counts, 'track');
       });
     }
 
@@ -460,9 +512,14 @@
         writeTrackCounts(list?.id, counts);
       });
     });
+
+    handleExitRequest = async (targetScreen) => {
+      await requestActiveSessionExit(list, normalized, counts, targetScreen);
+    };
   }
 
   function renderChooserState(lists) {
+    handleExitRequest = null;
     const safeLists = Array.isArray(lists) ? lists : [];
 
     const matchedSelected = safeLists.find(
@@ -628,5 +685,11 @@
 
   renderTrackState().catch((err) => {
     console.warn('Failed to render track screen', err);
+  });
+
+  window.addEventListener('ot-active-session-exit-request', async (evt) => {
+    const targetScreen = String(evt?.detail?.targetScreen || '').trim();
+    if (!handleExitRequest) return;
+    await handleExitRequest(targetScreen);
   });
 })();

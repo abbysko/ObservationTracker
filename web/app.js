@@ -117,21 +117,28 @@ function setScreen(name, options = {}) {
   const trackingState = getActiveTrackingState();
   const lockNavigation = trackingState.isActive && target !== 'track';
   if (lockNavigation) {
-    target = 'track';
-    if (!options.skipUrlSync) {
-      syncUrlForScreen(
-        'track',
-        trackingState.activeId ? { listId: trackingState.activeId } : undefined
-      );
-    }
-    if (!options.silentLock) {
-      window.alert('End the active session before leaving Track.');
-    }
+    window.dispatchEvent(
+      new CustomEvent('ot-active-session-exit-request', {
+        detail: {
+          targetScreen: target,
+        },
+      })
+    );
+    return;
   }
 
   state.current = target;
-  if (!options.skipUrlSync && !lockNavigation)
-    syncUrlForScreen(target, options.routeParams || undefined);
+  if (!options.skipUrlSync && !lockNavigation) {
+    const requestedRouteParams = options.routeParams || undefined;
+    const trackRouteParams =
+      target === 'track' &&
+      trackingState.isActive &&
+      !requestedRouteParams?.listId &&
+      trackingState.activeId
+        ? { listId: trackingState.activeId }
+        : requestedRouteParams;
+    syncUrlForScreen(target, trackRouteParams);
+  }
   loadScreen(screens[target]);
   updateNav();
 }
