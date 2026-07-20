@@ -905,6 +905,12 @@ html[data-theme='dark'] .track-picker-menu {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
+.track-grid-count.track-grid-count-zero {
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border-color);
+}
+
 .track-summary-line {
   white-space: nowrap;
 }
