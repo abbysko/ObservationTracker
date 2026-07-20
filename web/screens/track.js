@@ -198,11 +198,16 @@
   function renderActiveState(list) {
     const normalized = normalizeTrackItems(list);
     const counts = readTrackCounts(list?.id);
+    const totalItems = normalized.length;
+    const undoStack = [];
     let observedCount = normalized.reduce(
       (sum, item) => sum + (Number(counts[item.key] || 0) > 0 ? 1 : 0),
       0
     );
-    let notYetObservedCount = Math.max(0, normalized.length - observedCount);
+    let notYetObservedCount = Math.max(0, totalItems - observedCount);
+    const observedPercent =
+      totalItems > 0 ? (observedCount / totalItems) * 100 : 0;
+    const observedPercentLabel = `${Math.round(observedPercent)}%`;
 
     const gridMarkup = normalized
       .map((item) => {
@@ -237,6 +242,20 @@
           <i data-feather="plus"></i>
         </button>
       </div>
+      <div class="track-progress" aria-label="Observation progress">
+        <div class="track-progress-meta">
+          <span class="item-count-text track-summary-line">
+            Observed: <span class="track-observed-count">${observedCount}</span>
+            <span class="track-observed-percent">(${observedPercentLabel})</span>
+          </span>
+          <span class="item-count-text track-summary-line">
+            Not observed: <span class="track-not-yet-count">${notYetObservedCount}</span>
+          </span>
+        </div>
+        <div class="track-progress-bar" role="img" aria-label="Observed ${observedCount} of ${totalItems} items">
+          <div class="track-progress-fill" style="width: ${observedPercent}%"></div>
+        </div>
+      </div>
       <div class="lists-container track-active-body" aria-label="Active tracking session">
         ${
           normalized.length
@@ -245,10 +264,9 @@
         }
       </div>
       <div class="track-session-actions">
-        <div class="item-count-text track-summary-line" aria-live="polite">
-          Observed: <span class="track-observed-count">${observedCount}</span> | Not observed:
-          <span class="track-not-yet-count">${notYetObservedCount}</span>
-        </div>
+        <button class="drawer-action track-undo-button" type="button" aria-label="Undo last observation" disabled>
+          <span>Undo</span><i data-feather="corner-down-left"></i>
+        </button>
         <button class="drawer-action primary track-end-session-button" type="button" aria-label="End active tracking session">
           <span>End Session</span><i data-feather="stop-circle"></i>
         </button>
@@ -266,9 +284,65 @@
     const endSessionButton = container.querySelector(
       '.track-end-session-button'
     );
+    const undoButton = container.querySelector('.track-undo-button');
+
+    const setUndoEnabled = (enabled) => {
+      if (!undoButton) return;
+      undoButton.disabled = !enabled;
+    };
+
+    const syncObservedSummary = () => {
+      if (observedSummary) observedSummary.textContent = String(observedCount);
+      if (notYetSummary)
+        notYetSummary.textContent = String(notYetObservedCount);
+      updateProgress();
+    };
+
+    const applyUndoAction = () => {
+      const lastUndoAction = undoStack.pop();
+      if (!lastUndoAction) return;
+
+      const { itemKey, previousCount, nextCount } = lastUndoAction;
+      const button = container.querySelector(
+        `.track-grid-button[data-item-key="${CSS.escape(itemKey)}"]`
+      );
+      counts[itemKey] = previousCount;
+
+      if (button) {
+        button.setAttribute('data-count', String(previousCount));
+        const countEl = button.querySelector('.track-grid-count');
+        if (previousCount > 0) {
+          if (countEl) countEl.textContent = String(previousCount);
+          else {
+            const nextEl = document.createElement('span');
+            nextEl.className = 'track-grid-count';
+            nextEl.textContent = String(previousCount);
+            button.appendChild(nextEl);
+          }
+        } else if (countEl) {
+          countEl.remove();
+        }
+      }
+
+      if (previousCount === 0 && nextCount === 1) {
+        observedCount = Math.max(0, observedCount - 1);
+        notYetObservedCount = Math.max(0, totalItems - observedCount);
+        syncObservedSummary();
+      }
+
+      writeTrackCounts(list?.id, counts);
+      setUndoEnabled(undoStack.length > 0);
+    };
+
     if (endSessionButton) {
       endSessionButton.addEventListener('click', async () => {
         await endActiveSession(list, normalized, counts);
+      });
+    }
+
+    if (undoButton) {
+      undoButton.addEventListener('click', () => {
+        applyUndoAction();
       });
     }
 
@@ -330,7 +404,25 @@
     }
 
     const observedSummary = container.querySelector('.track-observed-count');
+    const observedPercentSummary = container.querySelector(
+      '.track-observed-percent'
+    );
     const notYetSummary = container.querySelector('.track-not-yet-count');
+    const progressFill = container.querySelector('.track-progress-fill');
+
+    const updateProgress = () => {
+      const nextObservedPercent =
+        totalItems > 0 ? (observedCount / totalItems) * 100 : 0;
+      if (progressFill) {
+        progressFill.style.width = `${nextObservedPercent}%`;
+      }
+      if (observedPercentSummary) {
+        observedPercentSummary.textContent = `(${Math.round(
+          nextObservedPercent
+        )}%)`;
+      }
+    };
+
     container.querySelectorAll('.track-grid-button').forEach((btn) => {
       btn.addEventListener('click', () => {
         const itemKey = btn.getAttribute('data-item-key');
@@ -351,12 +443,19 @@
 
         if (previousCount === 0 && nextCount === 1) {
           observedCount += 1;
-          notYetObservedCount = Math.max(0, normalized.length - observedCount);
-          if (observedSummary)
-            observedSummary.textContent = String(observedCount);
-          if (notYetSummary)
-            notYetSummary.textContent = String(notYetObservedCount);
+          notYetObservedCount = Math.max(0, totalItems - observedCount);
+          syncObservedSummary();
         }
+
+        undoStack.push({
+          itemKey,
+          previousCount,
+          nextCount,
+        });
+        if (undoStack.length > 10) {
+          undoStack.shift();
+        }
+        setUndoEnabled(undoStack.length > 0);
 
         writeTrackCounts(list?.id, counts);
       });

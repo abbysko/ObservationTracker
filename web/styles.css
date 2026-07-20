@@ -783,12 +783,45 @@ html[data-theme='dark'] .track-picker-menu {
   padding: 10px;
 }
 
+.track-progress {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.track-progress-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.track-progress-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--border-color) 55%, transparent);
+}
+
+.track-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.18s ease;
+}
+
 .track-session-actions {
   margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.track-undo-button {
+  flex: 0 0 auto;
 }
 
 .track-grid {
@@ -873,7 +906,5 @@ html[data-theme='dark'] .track-picker-menu {
 }
 
 .track-summary-line {
-  flex: 1 1 auto;
-  min-width: 0;
   white-space: nowrap;
 }
