@@ -2,6 +2,7 @@
 (function () {
   const container = document.querySelector('.screen-track');
   if (!container) return;
+  const TRACK_COUNT_PREFIX = 'ot_track_counts_v1_';
   let chooserSelectedListId = null;
   let chooserMenuOpen = false;
   let routeStateApplied = false;
@@ -27,10 +28,73 @@
     }
   }
 
-  function setActiveTrackingList(list) {
+  function getCountStorageKey(listId) {
+    return `${TRACK_COUNT_PREFIX}${String(listId || '')}`;
+  }
+
+  function readTrackCounts(listId) {
+    if (!listId) return {};
+    try {
+      const raw = sessionStorage.getItem(getCountStorageKey(listId));
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (err) {
+      console.warn('Failed to parse track counts', err);
+      return {};
+    }
+  }
+
+  function writeTrackCounts(listId, counts) {
+    if (!listId) return;
+    try {
+      sessionStorage.setItem(
+        getCountStorageKey(listId),
+        JSON.stringify(counts)
+      );
+    } catch (err) {
+      console.warn('Failed to save track counts', err);
+    }
+  }
+
+  function clearTrackCounts(listId) {
+    if (!listId) return;
+    sessionStorage.removeItem(getCountStorageKey(listId));
+  }
+
+  function normalizeTrackItems(list) {
+    const source = Array.isArray(list?.items) ? list.items : [];
+    return source
+      .map((item, index) => {
+        const isObject =
+          item && typeof item === 'object' && !Array.isArray(item);
+        const label = isObject
+          ? String(item.name || '').trim()
+          : String(item || '').trim();
+        if (!label) return null;
+        const id = isObject && item.id ? String(item.id).trim() : '';
+        return {
+          key: id || `idx-${index}-${label.toLowerCase()}`,
+          label,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function getSuggestedCopyName(lists, baseName) {
+    let n = 1;
+    let candidate = `${baseName} ${n}`;
+    while (lists.some((x) => x.name === candidate)) {
+      n += 1;
+      candidate = `${baseName} ${n}`;
+    }
+    return candidate;
+  }
+
+  function setActiveTrackingList(list, options = {}) {
     sessionStorage.setItem('ot_active_list_id', list.id);
     sessionStorage.setItem('ot_active_list_name', list.name);
     sessionStorage.setItem('ot_list_action', 'start-track');
+    if (options.resetCounts) clearTrackCounts(list.id);
   }
 
   function clearActiveTrackingList() {
@@ -38,6 +102,47 @@
     sessionStorage.removeItem('ot_active_list_name');
     sessionStorage.removeItem('ot_list_action');
     chooserMenuOpen = false;
+  }
+
+  function buildSessionEntry(list, normalized, counts) {
+    const items = normalized.map((item) => ({
+      id: item.key,
+      name: item.label,
+      count: Number(counts[item.key] || 0),
+    }));
+    const observedItems = items.filter((item) => item.count > 0);
+    return {
+      id: 'session-' + Date.now(),
+      listId: list.id,
+      listName: list.name,
+      endedAt: Date.now(),
+      itemCount: items.length,
+      observedItemCount: observedItems.length,
+      totalObservations: observedItems.reduce(
+        (sum, item) => sum + item.count,
+        0
+      ),
+      items,
+    };
+  }
+
+  async function endActiveSession(list, normalized, counts) {
+    const shouldSave = window.confirm(
+      'End session?\n\nChoose OK to Save, or Cancel to Abandon.'
+    );
+
+    if (
+      shouldSave &&
+      typeof window.repository.saveHistorySession === 'function'
+    ) {
+      const sessionEntry = buildSessionEntry(list, normalized, counts);
+      await window.repository.saveHistorySession(sessionEntry);
+    }
+
+    clearTrackCounts(list.id);
+    clearActiveTrackingList();
+    syncTrackRoute(null);
+    await renderTrackState();
   }
 
   function syncTrackRoute(listId) {
@@ -90,27 +195,172 @@
     await renderTrackState();
   }
 
-  function renderActiveState(listName) {
+  function renderActiveState(list) {
+    const normalized = normalizeTrackItems(list);
+    const counts = readTrackCounts(list?.id);
+    let observedCount = normalized.reduce(
+      (sum, item) => sum + (Number(counts[item.key] || 0) > 0 ? 1 : 0),
+      0
+    );
+    let notYetObservedCount = Math.max(0, normalized.length - observedCount);
+
+    const gridMarkup = normalized
+      .map((item) => {
+        const count = Number(counts[item.key] || 0);
+        const countMarkup =
+          count > 0 ? `<span class="track-grid-count">${count}</span>` : '';
+        return `
+          <button
+            class="track-grid-button"
+            type="button"
+            data-item-key="${escapeAttr(item.key)}"
+            data-count="${count}"
+            aria-label="Increment ${escapeAttr(item.label)} count"
+          >
+            <span class="track-grid-label">${escapeHtml(item.label)}</span>
+            ${countMarkup}
+          </button>
+        `;
+      })
+      .join('');
+
     container.innerHTML = `
       <div class="screen-header">
         <h1 class="detail-breadcrumb">
           <a href="#" class="list-breadcrumb-link track-breadcrumb-root" aria-label="Back to track list picker">Track</a>
           <span class="breadcrumb-sep">&gt;</span>
-          <span class="breadcrumb-current">${escapeHtml(listName)}</span>
+          <span class="breadcrumb-current">${escapeHtml(
+            list?.name || ''
+          )}</span>
         </h1>
+        <button class="add-button track-add-item-button" type="button" aria-label="Add item to this list">
+          <i data-feather="plus"></i>
+        </button>
       </div>
-      <div class="lists-container track-active-body" aria-label="Active tracking session"></div>
+      <div class="lists-container track-active-body" aria-label="Active tracking session">
+        ${
+          normalized.length
+            ? `<div class="track-grid">${gridMarkup}</div>`
+            : '<div class="track-empty">This list has no items to track.</div>'
+        }
+      </div>
+      <div class="track-session-actions">
+        <div class="item-count-text track-summary-line" aria-live="polite">
+          Observed: <span class="track-observed-count">${observedCount}</span> | Not observed:
+          <span class="track-not-yet-count">${notYetObservedCount}</span>
+        </div>
+        <button class="drawer-action primary track-end-session-button" type="button" aria-label="End active tracking session">
+          <span>End Session</span><i data-feather="stop-circle"></i>
+        </button>
+      </div>
     `;
 
     const root = container.querySelector('.track-breadcrumb-root');
     if (root) {
       root.addEventListener('click', async (e) => {
         e.preventDefault();
-        clearActiveTrackingList();
-        syncTrackRoute(null);
+        await endActiveSession(list, normalized, counts);
+      });
+    }
+
+    const endSessionButton = container.querySelector(
+      '.track-end-session-button'
+    );
+    if (endSessionButton) {
+      endSessionButton.addEventListener('click', async () => {
+        await endActiveSession(list, normalized, counts);
+      });
+    }
+
+    const addItemButton = container.querySelector('.track-add-item-button');
+    if (addItemButton) {
+      addItemButton.addEventListener('click', async () => {
+        const nextItemRaw = window.prompt('New item name', '');
+        if (nextItemRaw === null) return;
+        const nextItemName = String(nextItemRaw).trim();
+        if (!nextItemName) {
+          window.alert('Item name cannot be empty.');
+          return;
+        }
+
+        const refreshedLists = await window.repository.loadLists();
+        const current = refreshedLists.find((x) => x.id === list.id) || list;
+        const priorCounts = readTrackCounts(current.id);
+
+        let targetList = current;
+        if (current.builtIn) {
+          const suggestedName = getSuggestedCopyName(
+            refreshedLists,
+            current.name
+          );
+          const nextListNameRaw = window.prompt(
+            'Built-in list detected. Name for the new editable list',
+            suggestedName
+          );
+          if (nextListNameRaw === null) return;
+          const nextListName = String(nextListNameRaw).trim();
+          if (!nextListName) {
+            window.alert('List name cannot be empty.');
+            return;
+          }
+
+          targetList = await window.repository.duplicateList(current);
+          targetList.name = nextListName;
+          targetList.builtIn = false;
+
+          if (Object.keys(priorCounts).length > 0) {
+            writeTrackCounts(targetList.id, priorCounts);
+          }
+        }
+
+        const existingItems = Array.isArray(targetList.items)
+          ? targetList.items
+          : [];
+        targetList.items = existingItems.concat({
+          id: 'item-' + Date.now(),
+          name: nextItemName,
+        });
+
+        await window.repository.saveList(targetList);
+        chooserSelectedListId = targetList.id;
+        setActiveTrackingList(targetList);
+        syncTrackRoute(targetList.id);
         await renderTrackState();
       });
     }
+
+    const observedSummary = container.querySelector('.track-observed-count');
+    const notYetSummary = container.querySelector('.track-not-yet-count');
+    container.querySelectorAll('.track-grid-button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const itemKey = btn.getAttribute('data-item-key');
+        if (!itemKey) return;
+
+        const previousCount = Number(btn.getAttribute('data-count') || 0);
+        const nextCount = Number(btn.getAttribute('data-count') || 0) + 1;
+        btn.setAttribute('data-count', String(nextCount));
+        counts[itemKey] = nextCount;
+
+        let countEl = btn.querySelector('.track-grid-count');
+        if (!countEl) {
+          countEl = document.createElement('span');
+          countEl.className = 'track-grid-count';
+          btn.appendChild(countEl);
+        }
+        countEl.textContent = String(nextCount);
+
+        if (previousCount === 0 && nextCount === 1) {
+          observedCount += 1;
+          notYetObservedCount = Math.max(0, normalized.length - observedCount);
+          if (observedSummary)
+            observedSummary.textContent = String(observedCount);
+          if (notYetSummary)
+            notYetSummary.textContent = String(notYetObservedCount);
+        }
+
+        writeTrackCounts(list?.id, counts);
+      });
+    });
   }
 
   function renderChooserState(lists) {
@@ -239,7 +489,7 @@
         const refreshed = await window.repository.loadLists();
         const list = refreshed.find((x) => x.id === id);
         if (!list) return;
-        setActiveTrackingList(list);
+        setActiveTrackingList(list, { resetCounts: true });
         syncTrackRoute(list.id);
         await renderTrackState();
       });
@@ -255,10 +505,19 @@
 
     if (action === 'start-track' && (activeId || activeName)) {
       const match = activeId ? lists.find((x) => x.id === activeId) : null;
-      const name = match?.name || activeName;
-      if (name) {
+      const activeList =
+        match ||
+        (activeName
+          ? {
+              id: activeId || '',
+              name: activeName,
+              items: [],
+            }
+          : null);
+
+      if (activeList) {
         chooserMenuOpen = false;
-        renderActiveState(name);
+        renderActiveState(activeList);
         renderIcons();
         return;
       }

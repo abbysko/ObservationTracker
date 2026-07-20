@@ -98,11 +98,39 @@ let state = {
   current: getRouteParams().page || 'lists',
 };
 
+function getActiveTrackingState() {
+  const action = sessionStorage.getItem('ot_list_action');
+  const activeId = sessionStorage.getItem('ot_active_list_id');
+  const activeName = sessionStorage.getItem('ot_active_list_name');
+  const isActive = action === 'start-track' && !!(activeId || activeName);
+  return {
+    isActive,
+    activeId,
+    activeName,
+  };
+}
+
 function setScreen(name, options = {}) {
-  const target = normalizeScreenName(name);
+  let target = normalizeScreenName(name);
   if (!target) return;
+
+  const trackingState = getActiveTrackingState();
+  const lockNavigation = trackingState.isActive && target !== 'track';
+  if (lockNavigation) {
+    target = 'track';
+    if (!options.skipUrlSync) {
+      syncUrlForScreen(
+        'track',
+        trackingState.activeId ? { listId: trackingState.activeId } : undefined
+      );
+    }
+    if (!options.silentLock) {
+      window.alert('End the active session before leaving Track.');
+    }
+  }
+
   state.current = target;
-  if (!options.skipUrlSync)
+  if (!options.skipUrlSync && !lockNavigation)
     syncUrlForScreen(target, options.routeParams || undefined);
   loadScreen(screens[target]);
   updateNav();
@@ -193,12 +221,12 @@ function updateNav() {
 // initialize after repository is ready
 loadRepository()
   .then(() => {
-    setScreen(state.current, { skipUrlSync: true });
+    setScreen(state.current, { skipUrlSync: true, silentLock: true });
   })
   .catch((err) => {
     console.error('Failed to load repository', err);
     // still try to load UI
-    setScreen(state.current, { skipUrlSync: true });
+    setScreen(state.current, { skipUrlSync: true, silentLock: true });
   });
 
 // expose for debugging

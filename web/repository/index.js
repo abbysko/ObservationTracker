@@ -49,10 +49,31 @@
     return saveList(copy).then(() => copy);
   }
 
+  function loadHistory() {
+    const raw = localStorage.getItem(KEY_HISTORY);
+    const history = raw ? JSON.parse(raw) : [];
+    return Promise.resolve(Array.isArray(history) ? history : []);
+  }
+
+  function saveHistorySession(sessionEntry) {
+    const entry = {
+      ...sessionEntry,
+      id: sessionEntry?.id || 'session-' + Date.now(),
+      savedAt: Date.now(),
+    };
+    const raw = localStorage.getItem(KEY_HISTORY);
+    const history = raw ? JSON.parse(raw) : [];
+    const next = Array.isArray(history) ? history.concat(entry) : [entry];
+    localStorage.setItem(KEY_HISTORY, JSON.stringify(next));
+    return Promise.resolve(entry);
+  }
+
   window.repository = {
     loadLists,
     saveList,
     deleteList,
     duplicateList,
+    loadHistory,
+    saveHistorySession,
   };
 })();
