@@ -2,6 +2,38 @@
 console.log('ObservationTracker starting');
 const app = document.getElementById('app');
 
+const nameHelpers = {
+  normalizeNameKey(value) {
+    return String(value || '')
+      .trim()
+      .toLocaleLowerCase();
+  },
+  normalizeRenameValue(rawValue) {
+    const value = String(rawValue || '').trim();
+    const nonWhitespaceLength = value.replace(/\s/g, '').length;
+
+    if (nonWhitespaceLength <= 1) {
+      return {
+        ok: false,
+        message: 'Name must be at least 2 non-whitespace characters.',
+      };
+    }
+
+    if (value.length >= 30) {
+      return {
+        ok: false,
+        message: 'Name must be fewer than 30 characters.',
+      };
+    }
+
+    return {
+      ok: true,
+      value,
+    };
+  },
+};
+window._obsNameHelpers = nameHelpers;
+
 let breadcrumbFitRaf = null;
 
 function fitDetailBreadcrumb(el) {

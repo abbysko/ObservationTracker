@@ -1,5 +1,6 @@
 // UI glue for history screen
 (function () {
+  const nameHelpers = window._obsNameHelpers || {};
   const container = document.querySelector('.screen-history');
   if (!container) return;
   let selectedSessionId = null;
@@ -9,30 +10,17 @@
   let detailChart = null;
 
   function normalizeRenameValue(rawValue) {
+    if (typeof nameHelpers.normalizeRenameValue === 'function') {
+      return nameHelpers.normalizeRenameValue(rawValue);
+    }
     const value = String(rawValue || '').trim();
-    const nonWhitespaceLength = value.replace(/\s/g, '').length;
-
-    if (nonWhitespaceLength <= 1) {
-      return {
-        ok: false,
-        message: 'Name must be at least 2 non-whitespace characters.',
-      };
-    }
-
-    if (value.length >= 30) {
-      return {
-        ok: false,
-        message: 'Name must be fewer than 30 characters.',
-      };
-    }
-
-    return {
-      ok: true,
-      value,
-    };
+    return { ok: !!value, value, message: 'Name cannot be empty.' };
   }
 
   function normalizeNameKey(value) {
+    if (typeof nameHelpers.normalizeNameKey === 'function') {
+      return nameHelpers.normalizeNameKey(value);
+    }
     return String(value || '')
       .trim()
       .toLocaleLowerCase();
