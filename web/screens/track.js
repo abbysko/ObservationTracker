@@ -173,8 +173,8 @@
           <div class="session-exit-actions">
             <button type="button" class="drawer-action" data-choice="keep">Oops, keep tracking</button>
             <button type="button" class="drawer-action primary" data-choice="save">Stop tracking and save</button>
-            <button type="button" class="drawer-action" data-choice="clear">Stop tracking and clear data</button>
           </div>
+          <div class="session-exit-copy">To delete this session, select save and then delete it on the History page.</div>
         </div>
       `;
 
@@ -203,13 +203,13 @@
     targetScreen
   ) {
     const choice = await showActiveSessionExitDialog();
-    if (choice === 'keep' || !choice) return;
+    if (choice !== 'save') return;
 
     const savedSession = await completeActiveSession(
       list,
       normalized,
       counts,
-      choice === 'save'
+      true
     );
 
     if (choice === 'save' && targetScreen === 'track') {
