@@ -258,6 +258,56 @@
     return source;
   }
 
+  function buildProgressSummary(session) {
+    const items = Array.isArray(session?.items) ? session.items : [];
+    const totalItems = items.length;
+    const observedCount = items.filter(
+      (item) => Number(item?.count || 0) > 0
+    ).length;
+    const notObservedCount = Math.max(0, totalItems - observedCount);
+    const observedPercent =
+      totalItems > 0 ? (observedCount / totalItems) * 100 : 0;
+    const observedPercentLabel = `${Math.round(observedPercent)}%`;
+    return {
+      totalItems,
+      observedCount,
+      notObservedCount,
+      observedPercent,
+      observedPercentLabel,
+    };
+  }
+
+  function renderProgressWidget(summary, ariaLabel) {
+    return `
+      <div class="track-progress" aria-label="${escapeAttr(
+        ariaLabel || 'Observation progress summary'
+      )}">
+        <div class="track-progress-meta">
+          <span class="item-count-text track-summary-line">
+            Observed: <span class="track-observed-count">${
+              summary.observedCount
+            }</span>
+            <span class="track-observed-percent">(${
+              summary.observedPercentLabel
+            })</span>
+          </span>
+          <span class="item-count-text track-summary-line">
+            Not observed: <span class="track-not-yet-count">${
+              summary.notObservedCount
+            }</span>
+          </span>
+        </div>
+        <div class="track-progress-bar" role="img" aria-label="Observed ${
+          summary.observedCount
+        } of ${summary.totalItems} items">
+          <div class="track-progress-fill" style="width: ${
+            summary.observedPercent
+          }%"></div>
+        </div>
+      </div>
+    `;
+  }
+
   function buildUniqueListName(existingLists, baseName) {
     const safeBase = String(baseName || '').trim() || 'Restarted Session';
     const taken = new Set(
@@ -429,26 +479,34 @@
             }" data-id="${escapeAttr(session.id || '')}">${escapeHtml(
               title
             )}</div>`;
+        const deleteButtonMarkup = isSelected
+          ? `<button class="row-delete history-session-delete" data-id="${escapeAttr(
+              session.id || ''
+            )}" aria-label="Delete session"><i data-feather="trash"></i></button>`
+          : '';
         const drawerMarkup = isSelected
           ? `
             <div class="list-drawer history-session-drawer" data-id="${escapeAttr(
               session.id || ''
             )}">
-              <button class="drawer-action primary history-session-action" type="button" data-action="restart" data-id="${escapeAttr(
-                session.id || ''
-              )}" aria-label="Restart tracking from this session">
-                <span>Restart Tracking</span><i data-feather="target"></i>
-              </button>
-              <button class="drawer-action history-session-action" type="button" data-action="view" data-id="${escapeAttr(
-                session.id || ''
-              )}" aria-label="Session details">
-                <span>Session Details</span><i data-feather="arrow-right-circle"></i>
-              </button>
-              <button class="drawer-action history-session-action" type="button" data-action="delete" data-id="${escapeAttr(
-                session.id || ''
-              )}" aria-label="Delete session">
-                <span>Delete Session</span><i data-feather="trash"></i>
-              </button>
+              <div class="history-session-inline-row">
+                ${renderProgressWidget(
+                  buildProgressSummary(session),
+                  'Observation progress summary'
+                )}
+                <div class="history-session-actions-row">
+                  <button class="drawer-action history-session-action" type="button" data-action="view" data-id="${escapeAttr(
+                    session.id || ''
+                  )}" aria-label="Details">
+                    <span>Details</span><i data-feather="arrow-right-circle"></i>
+                  </button>
+                  <button class="drawer-action primary history-session-action" type="button" data-action="restart" data-id="${escapeAttr(
+                    session.id || ''
+                  )}" aria-label="Restart tracking from this session">
+                    <span>Restart</span><i data-feather="target"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           `
           : '';
@@ -462,6 +520,7 @@
               ${titleMarkup}
               <div class="list-meta">
                 <span class="item-count-text">${escapeHtml(stamp)}</span>
+                ${deleteButtonMarkup}
               </div>
             </div>
             ${drawerMarkup}
@@ -484,10 +543,10 @@
         if (editingSessionId === id) return;
 
         if (listSelectedSessionId === id) {
-          selectedSessionId = id;
-          editingSessionId = null;
           listSelectedSessionId = null;
-          syncHistoryRoute(id);
+          editingSessionId = null;
+          selectedSessionId = null;
+          syncHistoryRoute(null);
           await renderHistory();
           return;
         }
@@ -649,8 +708,17 @@
           await renderHistory();
           return;
         }
+      });
+    });
 
-        if (action !== 'delete') return;
+    container.querySelectorAll('.history-session-delete').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+
+        const target = sessions.find((x) => String(x.id || '') === String(id));
+        if (!target) return;
 
         const label = String(target?.listName || 'session');
         const confirmed = window.confirm(`Delete "${label}"?`);
@@ -684,12 +752,7 @@
     const stamp = formatSessionDate(session?.savedAt || session?.endedAt);
     const observedItems = normalizeObservedItems(session);
     const histogramItems = buildHistogramItems(observedItems);
-    const totalItems = observedItems.length;
-    const observedCount = observedItems.filter((item) => item.count > 0).length;
-    const notObservedCount = Math.max(0, totalItems - observedCount);
-    const observedPercent =
-      totalItems > 0 ? (observedCount / totalItems) * 100 : 0;
-    const observedPercentLabel = `${Math.round(observedPercent)}%`;
+    const progressSummary = buildProgressSummary(session);
 
     const rows = observedItems
       .map(
@@ -726,20 +789,7 @@
         </h1>
       </div>
       <div class="item-count-text">Session ended ${escapeHtml(stamp)}</div>
-      <div class="track-progress" aria-label="Observation progress summary">
-        <div class="track-progress-meta">
-          <span class="item-count-text track-summary-line">
-            Observed: <span class="track-observed-count">${observedCount}</span>
-            <span class="track-observed-percent">(${observedPercentLabel})</span>
-          </span>
-          <span class="item-count-text track-summary-line">
-            Not observed: <span class="track-not-yet-count">${notObservedCount}</span>
-          </span>
-        </div>
-        <div class="track-progress-bar" role="img" aria-label="Observed ${observedCount} of ${totalItems} items">
-          <div class="track-progress-fill" style="width: ${observedPercent}%"></div>
-        </div>
-      </div>
+      ${renderProgressWidget(progressSummary, 'Observation progress summary')}
       <div class="list-detail-card lists-container history-chart-card" aria-label="Sorted observation histogram">
         <div class="history-chart-wrap">
           <canvas class="history-chart-canvas" aria-label="Observation histogram" role="img"></canvas>

@@ -365,6 +365,51 @@ body {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+.history-session-drawer {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.history-session-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.history-session-inline-row .track-progress {
+  flex: 1 1 auto;
+  margin-top: 0;
+}
+
+.history-session-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.history-session-actions-row .drawer-action {
+  flex: 0 0 auto;
+  justify-content: space-between;
+}
+
+@media (max-width: 560px) {
+  .history-session-inline-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .history-session-actions-row {
+    width: 100%;
+  }
+
+  .history-session-actions-row .drawer-action {
+    flex: 1 1 0;
+  }
+}
+
 .list-item:last-child .list-drawer {
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
@@ -805,7 +850,7 @@ html[data-theme='dark'] .track-picker-menu {
   height: 6px;
   border-radius: 999px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--border-color) 55%, transparent);
+  background: color-mix(in srgb, var(--muted) 24%, transparent);
 }
 
 .track-progress-fill {

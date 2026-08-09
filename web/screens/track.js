@@ -259,7 +259,7 @@
           <div class="session-exit-copy">Choose how to proceed.</div>
           <div class="session-exit-actions">
             <button type="button" class="drawer-action" data-choice="keep">Oops, keep tracking</button>
-            <button type="button" class="drawer-action primary" data-choice="save">Stop tracking and save</button>
+            <button type="button" class="drawer-action primary" data-choice="save">Save session</button>
           </div>
           <div class="session-exit-copy">To delete this session, select save and then delete it on the History page.</div>
         </div>
