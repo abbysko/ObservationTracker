@@ -270,6 +270,133 @@
     return source;
   }
 
+  function buildUniqueListName(existingLists, baseName) {
+    const safeBase = String(baseName || '').trim() || 'Restarted Session';
+    const taken = new Set(
+      (Array.isArray(existingLists) ? existingLists : []).map((list) =>
+        normalizeNameKey(list?.name || '')
+      )
+    );
+    if (!taken.has(normalizeNameKey(safeBase))) return safeBase;
+
+    let n = 1;
+    while (taken.has(normalizeNameKey(`${safeBase} ${n}`))) {
+      n += 1;
+    }
+    return `${safeBase} ${n}`;
+  }
+
+  function normalizeTrackItemKey(item, index) {
+    const isObject = item && typeof item === 'object' && !Array.isArray(item);
+    const label = isObject
+      ? String(item.name || '').trim()
+      : String(item || '').trim();
+    const id = isObject && item.id ? String(item.id).trim() : '';
+    return id || `idx-${index}-${label.toLowerCase()}`;
+  }
+
+  function buildSeedCountsForRestart(list, session) {
+    const listItems = Array.isArray(list?.items) ? list.items : [];
+    const sessionItems = Array.isArray(session?.items) ? session.items : [];
+
+    const byId = new Map();
+    const byName = new Map();
+    sessionItems.forEach((item) => {
+      const count = Number(item?.count || 0);
+      const id = String(item?.id || '').trim();
+      const nameKey = normalizeNameKey(item?.name || '');
+      if (id) byId.set(id, count);
+      if (nameKey) byName.set(nameKey, count);
+    });
+
+    const counts = {};
+    listItems.forEach((item, index) => {
+      const key = normalizeTrackItemKey(item, index);
+      const itemId =
+        item && typeof item === 'object' && item.id
+          ? String(item.id).trim()
+          : '';
+      const itemNameKey = normalizeNameKey(
+        item && typeof item === 'object' ? item.name : item
+      );
+      const nextCount = itemId
+        ? Number(byId.get(itemId) || 0)
+        : Number(byName.get(itemNameKey) || 0);
+      counts[key] = Number.isFinite(nextCount) ? nextCount : 0;
+    });
+
+    return counts;
+  }
+
+  async function restartTrackingFromSession(session) {
+    if (!session) return false;
+    if (
+      !window.repository ||
+      typeof window.repository.loadLists !== 'function'
+    ) {
+      return false;
+    }
+
+    const lists = await window.repository.loadLists();
+    const targetId = String(session?.listId || '').trim();
+    let list = targetId ? lists.find((x) => x.id === targetId) : null;
+
+    if (!list) {
+      if (typeof window.repository.saveList !== 'function') return false;
+
+      const itemSource = Array.isArray(session?.items) ? session.items : [];
+      const items = itemSource
+        .map((item, index) => ({
+          id: String(item?.id || `item-${Date.now()}-${index}`).trim(),
+          name: String(item?.name || `Item ${index + 1}`).trim(),
+        }))
+        .filter((item) => item.name);
+
+      const uniqueName = buildUniqueListName(
+        lists,
+        `${String(session?.listName || 'Session').trim()} Restart`
+      );
+
+      list = {
+        id: 'custom-' + Date.now(),
+        name: uniqueName,
+        builtIn: false,
+        items,
+      };
+      await window.repository.saveList(list);
+    }
+
+    const seedCounts = buildSeedCountsForRestart(list, session);
+
+    sessionStorage.setItem('ot_active_list_id', list.id);
+    sessionStorage.setItem('ot_active_list_name', list.name);
+    sessionStorage.setItem('ot_list_action', 'start-track');
+    sessionStorage.setItem(
+      'ot_restart_history_session_id',
+      String(session?.id || '')
+    );
+    sessionStorage.setItem(
+      'ot_restart_history_session_name',
+      String(session?.listName || '').trim()
+    );
+    sessionStorage.setItem('ot_restart_history_list_id', String(list.id || ''));
+    sessionStorage.setItem(
+      `ot_track_counts_v1_${list.id}`,
+      JSON.stringify(seedCounts)
+    );
+
+    if (window._obs && typeof window._obs.setScreen === 'function') {
+      window._obs.setScreen('track', {
+        routeParams: {
+          listId: list.id,
+        },
+      });
+      return true;
+    }
+
+    return false;
+  }
+
   async function deleteHistorySessionById(sessionId) {
     const id = String(sessionId || '').trim();
     if (!id) return false;
@@ -319,10 +446,15 @@
             <div class="list-drawer history-session-drawer" data-id="${escapeAttr(
               session.id || ''
             )}">
-              <button class="drawer-action primary history-session-action" type="button" data-action="view" data-id="${escapeAttr(
+              <button class="drawer-action primary history-session-action" type="button" data-action="restart" data-id="${escapeAttr(
                 session.id || ''
-              )}" aria-label="View session details">
-                <span>View Session Details</span><i data-feather="arrow-right-circle"></i>
+              )}" aria-label="Restart tracking from this session">
+                <span>Restart Tracking</span><i data-feather="target"></i>
+              </button>
+              <button class="drawer-action history-session-action" type="button" data-action="view" data-id="${escapeAttr(
+                session.id || ''
+              )}" aria-label="Session details">
+                <span>Session Details</span><i data-feather="arrow-right-circle"></i>
               </button>
               <button class="drawer-action history-session-action" type="button" data-action="delete" data-id="${escapeAttr(
                 session.id || ''
@@ -337,10 +469,8 @@
             <div class="list-row history-session-row ${
               isSelected ? 'selected' : ''
             }" data-id="${escapeAttr(
-              session.id || ''
-            )}" aria-label="Open ${escapeAttr(title)} saved ${escapeAttr(
-          stamp
-        )}">
+          session.id || ''
+        )}" aria-label="Open ${escapeAttr(title)} saved ${escapeAttr(stamp)}">
               ${titleMarkup}
               <div class="list-meta">
                 <span class="item-count-text">${escapeHtml(stamp)}</span>
@@ -382,16 +512,18 @@
       });
     });
 
-    container.querySelectorAll('.history-session-title.editable').forEach((el) => {
-      el.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = el.getAttribute('data-id');
-        if (!id) return;
-        listSelectedSessionId = id;
-        editingSessionId = id;
-        await renderHistory();
+    container
+      .querySelectorAll('.history-session-title.editable')
+      .forEach((el) => {
+        el.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = el.getAttribute('data-id');
+          if (!id) return;
+          listSelectedSessionId = id;
+          editingSessionId = id;
+          await renderHistory();
+        });
       });
-    });
 
     container
       .querySelectorAll('.history-session-title-input')
@@ -510,6 +642,17 @@
         const id = btn.getAttribute('data-id');
         if (!id) return;
 
+        const target = sessions.find((x) => String(x.id || '') === String(id));
+        if (!target) return;
+
+        if (action === 'restart') {
+          const restarted = await restartTrackingFromSession(target);
+          if (!restarted) {
+            window.alert('Unable to restart tracking from this session.');
+          }
+          return;
+        }
+
         if (action === 'view') {
           selectedSessionId = id;
           editingSessionId = null;
@@ -521,7 +664,6 @@
 
         if (action !== 'delete') return;
 
-        const target = sessions.find((x) => String(x.id || '') === String(id));
         const label = String(target?.listName || 'session');
         const confirmed = window.confirm(`Delete "${label}"?`);
         if (!confirmed) return;
@@ -625,6 +767,12 @@
           }
         </div>
       </details>
+      <div class="list-detail-footer">
+        <div></div>
+        <button class="drawer-action primary history-detail-restart" type="button" aria-label="Restart tracking from this session">
+          <span>Restart Tracking</span><i data-feather="target"></i>
+        </button>
+      </div>
     `;
 
     const root = container.querySelector('.history-breadcrumb-root');
@@ -758,6 +906,24 @@
           console.warn('Failed to focus history breadcrumb input', err);
         }
       }, 0);
+    }
+
+    const restartButton = container.querySelector('.history-detail-restart');
+    if (restartButton) {
+      restartButton.addEventListener('click', async () => {
+        const restarted = await restartTrackingFromSession(session);
+        if (!restarted) {
+          window.alert('Unable to restart tracking from this session.');
+        }
+      });
+    }
+
+    if (window.feather && typeof window.feather.replace === 'function') {
+      try {
+        window.feather.replace();
+      } catch (err) {
+        console.warn('feather.replace failed on history detail', err);
+      }
     }
 
     await renderHistoryChart(histogramItems);

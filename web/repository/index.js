@@ -82,7 +82,15 @@
     const raw = localStorage.getItem(KEY_HISTORY);
     const history = raw ? JSON.parse(raw) : [];
     const safeHistory = Array.isArray(history) ? history : [];
-    const existingNames = safeHistory.map((entry) => entry?.listName || '');
+    const incomingId = String(sessionEntry?.id || '').trim();
+    const existingIndex = incomingId
+      ? safeHistory.findIndex((entry) => String(entry?.id || '') === incomingId)
+      : -1;
+    const comparisonPool =
+      existingIndex >= 0
+        ? safeHistory.filter((_, idx) => idx !== existingIndex)
+        : safeHistory;
+    const existingNames = comparisonPool.map((entry) => entry?.listName || '');
 
     const incomingName =
       String(sessionEntry?.listName || '').trim() || 'Session';
@@ -96,7 +104,10 @@
       id: sessionEntry?.id || 'session-' + Date.now(),
       savedAt: Date.now(),
     };
-    const next = safeHistory.concat(entry);
+
+    const next = safeHistory.slice();
+    if (existingIndex >= 0) next[existingIndex] = entry;
+    else next.push(entry);
     localStorage.setItem(KEY_HISTORY, JSON.stringify(next));
     return Promise.resolve(entry);
   }
