@@ -19,10 +19,6 @@
   --surface-bg: var(--surface);
   --surface-on-muted: var(--muted); /* non-active / secondary text on surface */
 
-  /* Error colors */
-  --error-bg: rgba(255, 230, 230, 0.95);
-  --error-color: crimson;
-
   /* Generic border tokens (use for cards, dividers, nav) */
   --border-color: rgba(0, 0, 0, 0.08);
   --border: 1px solid var(--border-color);
@@ -253,12 +249,6 @@ body {
 .bottom-nav .nav-button:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
   outline-offset: 2px;
-}
-
-/* Error state */
-.screen.error {
-  background: var(--error-bg);
-  color: var(--error-color);
 }
 
 /* Lists screen styles */

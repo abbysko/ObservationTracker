@@ -1,50 +1,87 @@
 # Architecture
 
-## Overview
+## Current state
 
-Development begins as a browser-first web application. The web app is later wrapped in a thin native iOS shell (Swift/SwiftUI) that hosts the web UI in a WebView.
+This project is currently a browser-first prototype. The app runs as a static web application, with state persisted in browser storage and the UI split into page-like screens. The native iOS wrapper is a future target, not the present implementation.
 
-- Primary codebase: JavaScript/HTML/CSS under `/web`
-- Native wrapper responsibilities (iOS):
-  - App navigation shell
-  - Persistence adapter (bridge to native storage)
-  - Preventing device sleep during active session
-  - App lifecycle events and settings UI
-  - Hosting the WebView (WKWebView)
+- Primary codebase: JavaScript, HTML, and CSS under `/web`
+- Current runtime model: static web app served locally in a browser
+- Current persistence: browser `localStorage` and `sessionStorage`
+- Future target: thin native iOS shell with a WebView and native storage bridge
 
-Everything else (UI, business logic) remains in JavaScript so the same codebase can power both web and native builds.
+The architecture is intentionally simple: the UI layer talks to a repository abstraction, while the repository implementation is currently browser-specific and lightweight.
 
 ## Directory layout (web)
 
-- `/web/index.html` — app shell
-- `/web/styles.css` — base styles and design tokens
-- `/web/app.js` — app entry point and bootstrapping
-- `/web/components` — UI components
-- `/web/screens` — top-level screens (Lists, Track, History)
-- `/web/services` — platform-agnostic services (timers, sorting)
-- `/web/repository` — repository interfaces and browser implementation
-- `/web/models` — data models and types
-- `/web/utils` — utilities and helpers
-- `/web/assets` — images, icons, fonts
-- `/web/data` — seeded built-in lists (JSON)
+- `/web/index.html` — app shell and route container
+- `/web/styles.css` — base styles, theme tokens, and screen styling
+- `/web/app.js` — app bootstrap, theme initialization, and screen routing
+- `/web/components` — reusable UI pieces and helper widgets
+- `/web/screens` — screen-specific logic and markup for Lists, Track, and History
+- `/web/services` — platform-neutral helpers and state logic
+- `/web/repository/index.js` — current repository implementation backed by `localStorage`
+- `/web/models` — model definitions and schema concepts
+- `/web/utils` — shared helper utilities
+- `/web/assets` — images, icons, fonts, and static resources
+- `/web/data/builtins.json` — seeded built-in list definitions
 
-## Persistence
+## Runtime architecture
 
-- Browser implementation: IndexedDB (via a small wrapper for typed access)
-- Native implementation: SwiftData or an equivalent native storage, exposed to the JS layer via a bridge
-- Repository pattern: UI code interacts with a repository interface, not storage APIs directly
+The application follows a lightweight layered structure:
 
-## Inter-process communication / Bridge
+- App shell: `web/app.js` initializes route state, theme preferences, and the active screen.
+- Screen layer: the screen modules render the Lists, Track, and History interfaces and handle user interaction.
+- Repository layer: `web/repository/index.js` exposes repository methods such as loading lists, saving custom lists, and storing history entries.
+- Storage layer: browser storage (`localStorage` / `sessionStorage`) is the current persistence mechanism.
 
-- Use a simple message-based bridge between JS and native (postMessage / message handlers).
-- Keep bridge surface small — implement only what native must do (persistence, prevent sleep, settings).
+This keeps the UI logic portable while still being simple enough for a prototype.
 
-## Build & Deployment
+## Persistence (current implementation)
 
-- Start with a simple static dev server for the web app.
-- For iOS, build a minimal Xcode project that embeds the web build and provides a repository implementation.
+The current implementation is intentionally minimal and does not yet use IndexedDB or a native bridge.
+
+- Built-in lists are loaded from `web/data/builtins.json`.
+- Custom lists and saved history are stored in `localStorage`.
+- Active tracking state is stored in `sessionStorage` while a session is in progress.
+- The repository abstraction exists, but it is currently a browser-only implementation rather than a full cross-platform persistence layer.
+
+## Repository pattern
+
+The intended design is already visible in the code:
+
+- UI code calls repository methods instead of reading browser storage directly.
+- The repository layer is the boundary between app logic and persistence.
+- This makes later replacement with a native-backed implementation more straightforward.
+
+In other words, the repository concept is present and useful, but the implementation remains a lightweight prototype.
+
+## Future native architecture
+
+The following is a planned extension, not the current state:
+
+- Wrap the web app in a minimal iOS shell using SwiftUI and `WKWebView`.
+- Expose native persistence through a small bridge to the JavaScript layer.
+- Keep the bridge surface narrow: persistence, active-session wake prevention, and small settings/state calls.
+- Preserve the existing JS UI logic so the same app can continue to run in browser and native wrappers.
+
+This future architecture is the correct long-term direction, but it is not yet implemented in the repository.
+
+## Build & deployment
+
+Current development flow:
+
+- Run the app with the project’s static dev server (`npm start`)
+- Open the browser app at the local dev port
+- Treat the repository as a simple prototype persistence layer
+
+Future deployment flow:
+
+- package the web app into a minimal Xcode project
+- embed the web view in the iOS shell
+- add the native repository and device-specific behavior
 
 ## Notes
 
-- Prefer small, focused modules and avoid heavy frameworks in Version 1.
-- Keep the native bridge stable and testable; most logic should remain in JS to maximize portability.
+- The codebase is intentionally lightweight and avoids heavy frameworks in Version 1.
+- The repository abstraction is already in place, even though the browser implementation is still simple.
+- The native wrapper and storage bridge should be added only after the web app’s behavior is stable and well-tested.
