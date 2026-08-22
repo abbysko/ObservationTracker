@@ -1,5 +1,5 @@
 // Small single-file app shell: state router and bottom navigation
-console.log('ObservationTracker starting');
+console.log('Loglist starting');
 const app = document.getElementById('app');
 
 const nameHelpers = {

@@ -2,7 +2,7 @@
 
 ## Vision
 
-Observation Tracker is an iPhone application that allows users to record observations of items from predefined or custom lists during individual tracking sessions. The project was inspired by playing the "license plate game" with my kids, where we wanted to track which US states' license plates we observed on a drive. However the vision for the app is to provide something more generic - more of a framework for counting observations from arbitrary lists, not a specialized car spotting app. This project is intentionally designed as a high-quality portfolio piece.
+Loglist is an iPhone application that allows users to record observations of items from predefined or custom lists during individual tracking sessions. The project was inspired by playing the "license plate game" with my kids, where we wanted to track which US states' license plates we observed on a drive. However the vision for the app is to provide something more generic - more of a framework for counting observations from arbitrary lists, not a specialized car spotting app. This project is intentionally designed as a high-quality portfolio piece.
 
 ## Scope
 
