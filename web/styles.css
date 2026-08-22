@@ -46,8 +46,7 @@ html[data-theme='dark'] {
 /* Base layout */
 html,
 body {
-  /* use viewport height and prevent body from scrolling so the app region can scroll internally */
-  height: 100vh;
+  min-height: 100%;
   margin: 0;
   box-sizing: border-box;
   font-family: -apple-system, sans-serif;
@@ -58,7 +57,8 @@ body {
   color: var(--text);
   /* set base font size from tokens so spacing scales with typography */
   font-size: var(--fs-base);
-  overflow: hidden; /* prevent page-level scrolling */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 *,
 *:before,
@@ -66,15 +66,14 @@ body {
   box-sizing: inherit;
 }
 #app {
-  /* make the app fill the viewport and be the scroll container for content */
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
   padding: 12px; /* reduce horizontal padding to fit small screens */
   box-sizing: border-box;
-  overflow: auto; /* content scrolls inside this element, bottom-nav stays fixed */
+  overflow: visible;
   /* ensure content does not sit under the nav (nav height 56px on small screens) */
   padding-bottom: calc(56px + 8px + env(safe-area-inset-bottom));
   max-width: 450px; /* clamp width for phone-sized content */

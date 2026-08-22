@@ -120,21 +120,37 @@ function loadRepository() {
     const params = new URLSearchParams(location.search);
     const themeParam = params.get('theme');
     const saved = localStorage.getItem('theme');
+    const followsSystem = location.protocol === 'loglist:';
+    const applySystemTheme = () => {
+      const prefersDark =
+        window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute(
+        'data-theme',
+        prefersDark ? 'dark' : 'light'
+      );
+    };
+
     if (themeParam === 'dark' || themeParam === 'light') {
       // explicit override via URL -> persist
       document.documentElement.setAttribute('data-theme', themeParam);
       localStorage.setItem('theme', themeParam);
-    } else if (saved === 'dark' || saved === 'light') {
+    } else if (!followsSystem && (saved === 'dark' || saved === 'light')) {
       // previously saved preference
       document.documentElement.setAttribute('data-theme', saved);
     } else {
-      // No explicit user preference: mirror system preference on first load
-      const prefersDark =
-        window.matchMedia &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const systemTheme = prefersDark ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', systemTheme);
+      applySystemTheme();
       // Do not persist this value; it is just an initial, system-matching default.
+    }
+
+    if (followsSystem && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleSystemThemeChange = () => applySystemTheme();
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+      } else if (typeof mediaQuery.addListener === 'function') {
+        mediaQuery.addListener(handleSystemThemeChange);
+      }
     }
   } catch (e) {
     console.warn('Theme init failed', e);
