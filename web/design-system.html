@@ -311,7 +311,7 @@
         justify-content: center;
         padding: 14px;
         border-bottom: 1px solid var(--border-color);
-        background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+        background: var(--surface);
       }
 
       .button-card-body {
@@ -368,22 +368,51 @@
       }
 
       .mockup-surface {
-        border: 1px dotted var(--border-color);
-        border-radius: 0;
-        background: rgba(99, 102, 241, 0.02);
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-bg);
         padding: 12px;
       }
 
       .mockup-frame {
         max-width: 500px;
-        border: 2px dashed rgba(99, 102, 241, 0.55);
+        border: none;
         border-radius: 0;
-        padding: 12px;
-        background: rgba(99, 102, 241, 0.04);
+        padding: 0;
+        background: transparent;
       }
 
       .mockup-frame + .mockup-frame {
         margin-top: 16px;
+      }
+
+      /* Keep app component demos class-driven while preventing fixed positioning in docs. */
+      .demo-inline-nav {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        margin: 0;
+      }
+
+      .demo-dropdown-frame {
+        margin-top: 18px;
+        min-height: 190px;
+      }
+
+      .demo-dropdown-header {
+        margin: 0;
+      }
+
+      .demo-dropdown-surface {
+        min-height: 112px;
+      }
+
+      .demo-dropdown-empty {
+        min-height: 112px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .screen-header-demo {
@@ -888,85 +917,24 @@
 
           <div class="mockup-frame" style="margin-top: 18px">
             <nav
-              class="bottom-nav"
+              class="bottom-nav demo-inline-nav"
               aria-label="Bottom navigation mockup"
-              style="
-                position: relative;
-                left: auto;
-                right: auto;
-                bottom: auto;
-                height: auto;
-                margin: 0;
-                border-top: 1px solid var(--border-color);
-                background: var(--surface);
-                padding: 10px 8px;
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-              "
             >
-              <button
-                class="nav-button"
-                type="button"
-                aria-label="Lists"
-                style="
-                  background: transparent;
-                  border: none;
-                  color: var(--muted);
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  gap: 4px;
-                  font-size: var(--fs-sm);
-                  font-weight: 600;
-                  padding: 6px 8px;
-                  cursor: pointer;
-                "
-              >
+              <button class="nav-button" type="button" aria-label="Lists">
                 <i data-feather="list"></i>
-                <span>Lists</span>
+                <span class="nav-label">Lists</span>
               </button>
               <button
                 class="nav-button active"
                 type="button"
                 aria-label="Track"
-                style="
-                  background: transparent;
-                  border: none;
-                  color: var(--accent);
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  gap: 4px;
-                  font-size: var(--fs-sm);
-                  font-weight: 600;
-                  padding: 6px 8px;
-                  cursor: pointer;
-                "
               >
                 <i data-feather="target"></i>
-                <span>Track</span>
+                <span class="nav-label">Track</span>
               </button>
-              <button
-                class="nav-button"
-                type="button"
-                aria-label="History"
-                style="
-                  background: transparent;
-                  border: none;
-                  color: var(--muted);
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  gap: 4px;
-                  font-size: var(--fs-sm);
-                  font-weight: 600;
-                  padding: 6px 8px;
-                  cursor: pointer;
-                "
-              >
+              <button class="nav-button" type="button" aria-label="History">
                 <i data-feather="clock"></i>
-                <span>History</span>
+                <span class="nav-label">History</span>
               </button>
             </nav>
           </div>
@@ -1113,12 +1081,10 @@
             </li>
           </ul>
 
-          <div class="mockup-frame" style="margin-top: 18px; min-height: 190px">
-            <div
-              class="screen-header"
-              style="margin: 0; height: 36px; justify-content: flex-end"
-            >
-              <div class="header-controls" style="display: inline-flex">
+          <div class="mockup-frame demo-dropdown-frame">
+            <div class="screen-header demo-dropdown-header">
+              <h1>History</h1>
+              <div class="header-controls">
                 <div class="sort-menu-wrap">
                   <button
                     class="sort-toggle"
@@ -1158,19 +1124,8 @@
               </div>
             </div>
 
-            <div
-              class="lists-container"
-              style="margin-top: 10px; min-height: 112px"
-            >
-              <div
-                class="list-detail-empty"
-                style="
-                  min-height: 112px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                "
-              >
+            <div class="lists-container demo-dropdown-surface">
+              <div class="list-detail-empty demo-dropdown-empty">
                 <div class="list-detail-empty-copy">Empty content surface</div>
               </div>
             </div>
