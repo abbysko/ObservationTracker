@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import UIKit
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -48,6 +49,10 @@ private struct LoglistWebView: UIViewRepresentable {
             LocalWebViewHandler(),
             forURLScheme: "loglist"
         )
+        configuration.userContentController.add(
+            context.coordinator,
+            name: "shareSession"
+        )
 
         let webView = WKWebView(
             frame: .zero,
@@ -67,7 +72,66 @@ private struct LoglistWebView: UIViewRepresentable {
 
     func updateUIView(_ webView: WKWebView, context: Context) {}
 
-    final class Coordinator: NSObject, WKUIDelegate {
+    final class Coordinator: NSObject, WKUIDelegate, WKScriptMessageHandler {
+        func userContentController(
+            _ userContentController: WKUserContentController,
+            didReceive message: WKScriptMessage
+        ) {
+            guard
+                message.name == "shareSession",
+                let payload = message.body as? [String: Any],
+                let csv = payload["csv"] as? String
+            else {
+                return
+            }
+
+            let filename = (payload["filename"] as? String) ?? "session-observations.csv"
+            let fileURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(filename)
+
+            do {
+                try csv.write(to: fileURL, atomically: true, encoding: .utf8)
+            } catch {
+                return
+            }
+
+            DispatchQueue.main.async {
+                guard let presenter = self.topViewController() else { return }
+                let activityViewController = UIActivityViewController(
+                    activityItems: [fileURL],
+                    applicationActivities: nil
+                )
+                if let popover = activityViewController.popoverPresentationController {
+                    popover.sourceView = presenter.view
+                    popover.sourceRect = CGRect(
+                        x: presenter.view.bounds.midX,
+                        y: presenter.view.bounds.midY,
+                        width: 0,
+                        height: 0
+                    )
+                }
+                presenter.present(activityViewController, animated: true)
+            }
+        }
+
+        private func topViewController(
+            from root: UIViewController? = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first(where: { $0.isKeyWindow })?.rootViewController
+        ) -> UIViewController? {
+            if let presented = root?.presentedViewController {
+                return topViewController(from: presented)
+            }
+            if let navigation = root as? UINavigationController {
+                return topViewController(from: navigation.visibleViewController)
+            }
+            if let tab = root as? UITabBarController {
+                return topViewController(from: tab.selectedViewController)
+            }
+            return root
+        }
+
         func webView(
             _ webView: WKWebView,
             runJavaScriptConfirmPanelWithMessage message: String,

@@ -426,28 +426,27 @@ html[data-theme='dark'] .screen-header .sort-menu {
 }
 
 .history-session-drawer {
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
   gap: 8px;
 }
 
 .history-session-inline-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: block;
   width: 100%;
 }
 
 .history-session-inline-row .track-progress {
-  flex: 1 1 auto;
   margin-top: 0;
 }
 
 .history-session-actions-row {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
-  flex: 0 0 auto;
+  width: 100%;
+  padding-top: 4px;
 }
 
 .history-session-actions-row .drawer-action {
@@ -456,15 +455,6 @@ html[data-theme='dark'] .screen-header .sort-menu {
 }
 
 @media (max-width: 560px) {
-  .history-session-inline-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .history-session-actions-row {
-    width: 100%;
-  }
-
   .history-session-actions-row .drawer-action {
     flex: 1 1 0;
   }
@@ -516,7 +506,8 @@ html[data-theme='dark'] .screen-header .sort-menu {
 }
 
 /* Built-in badge: small filled pill using accent tint for visibility */
-.badge {
+.badge,
+.track-grid-count {
   padding: 3px 8px;
   font-size: var(--fs-xs);
   /* slightly rounded but not fully pill-shaped */
@@ -536,11 +527,11 @@ html[data-theme='dark'] .lists-container {
   background: var(--surface-bg);
   border: var(--border);
 }
-html[data-theme='dark'] .badge {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+html[data-theme='dark'] .badge,
+html[data-theme='dark'] .track-grid-count {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: var(--accent);
 }
-
 html[data-theme='dark'] .list-item {
   border-bottom: var(--border);
 }
@@ -962,24 +953,13 @@ html[data-theme='dark'] .track-picker-menu {
   border-color: color-mix(in srgb, var(--border-color) 82%, transparent);
 }
 
-.track-grid-button[data-count='0'] .track-grid-count {
-  color: var(--muted);
-  background: transparent;
-  border: 1px solid var(--border-color);
-}
-
 .track-grid-button:not([data-count='0']) {
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-bg));
-  border-color: color-mix(in srgb, var(--accent) 56%, var(--border-color));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface-bg));
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--border-color));
 }
 
 .track-grid-button:not([data-count='0']) .track-grid-label {
   font-weight: 700;
-}
-
-.track-grid-button:not([data-count='0']) .track-grid-count {
-  color: var(--on-accent);
-  background: var(--accent);
 }
 
 .track-grid-label {
@@ -994,16 +974,11 @@ html[data-theme='dark'] .track-picker-menu {
 .track-grid-count {
   align-self: center;
   min-width: 24px;
+  min-height: 20px;
   height: 20px;
   border-radius: 999px;
   padding: 0 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--fs-xs);
   font-weight: 700;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .track-grid-count.track-grid-count-zero {
