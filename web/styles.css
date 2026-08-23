@@ -69,6 +69,7 @@ body {
   font-size: var(--fs-base);
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior-y: none;
 }
 *,
 *:before,
