@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Loglist App Design System</title>
+    <title>ObservationTracker App Design System</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
       html {
@@ -479,7 +479,7 @@
     <div class="page-shell" id="top">
       <section class="hero">
         <div class="hero-copy">
-          <h1>Loglist App Design System</h1>
+          <h1>ObservationTracker App Design System</h1>
           <p>
             A visual reference for the app's design tokens and reusable UI
             patterns.
@@ -685,10 +685,10 @@
             </div>
 
             <div class="icon-card">
-              <div class="icon-sample" aria-label="Save session icon">
-                <i data-feather="save"></i>
+              <div class="icon-sample" aria-label="End tracking icon">
+                <i data-feather="stop-circle"></i>
               </div>
-              <span class="icon-label">Save session</span>
+              <span class="icon-label">End</span>
             </div>
 
             <div class="icon-card">
@@ -713,10 +713,10 @@
             </div>
 
             <div class="icon-card">
-              <div class="icon-sample" aria-label="Start session icon">
-                <i data-feather="play"></i>
+              <div class="icon-sample" aria-label="Track icon">
+                <i data-feather="target"></i>
               </div>
-              <span class="icon-label">Start Session</span>
+              <span class="icon-label">Track</span>
             </div>
 
             <div class="icon-card">
@@ -756,7 +756,8 @@
             </li>
             <li>
               Global actions like adding an item to a list or starting/stopping
-              a session appear in the header.
+              a session appear in the header or at the bottom right outside the
+              primary surface.
             </li>
             <li>
               Surfaces, cards and buttons use a 10px radius, defined in
@@ -792,6 +793,13 @@
               "
             >
               <div class="list-detail-count">55 items</div>
+              <button
+                class="drawer-action primary detail-start-session"
+                type="button"
+                aria-label="Start session for this list"
+              >
+                <span>Primary Action</span><i data-feather="target"></i>
+              </button>
             </div>
           </div>
         </section>
@@ -983,7 +991,7 @@
                   type="button"
                   aria-label="Start session for this list"
                 >
-                  <span>Start Session</span><i data-feather="play"></i>
+                  <span>Start Session</span><i data-feather="target"></i>
                 </button>
               </div>
               <div class="button-card-body">
@@ -1039,37 +1047,6 @@
 
             <article class="button-card">
               <div class="button-card-demo">
-                <div
-                  class="screen-header"
-                  style="
-                    margin: 0;
-                    height: 36px;
-                    justify-content: center;
-                    align-items: center;
-                    width: 100%;
-                  "
-                >
-                  <div class="header-controls" style="display: inline-flex">
-                    <div class="sort-menu-wrap">
-                      <button
-                        class="sort-toggle"
-                        type="button"
-                        aria-label="Sort list"
-                      >
-                        <i data-feather="sliders"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="button-card-body">
-                <h3 class="button-card-title">Header Action Secondary</h3>
-                <p>Secondary header controls such as sort and undo.</p>
-              </div>
-            </article>
-
-            <article class="button-card">
-              <div class="button-card-demo">
                 <button
                   class="row-delete"
                   type="button"
@@ -1101,19 +1078,19 @@
           <h2>Dropdown</h2>
           <ul>
             <li>
-              Some secondary header actions, like the Sort button, act as a
-              dropdown, which when toggled reveals a vertical options menu.
+              Dropdowns are anchored to a compact header toggle and reveal a
+              vertical options menu.
             </li>
             <li>
-              The open state keeps the button highlighted and presents options
+              The open state keeps the toggle highlighted and presents options
               in a flat, square-cornered surface.
             </li>
             <li>
-              One option is always active to reflect the current selection.
+              One option is always active to reflect the current sort mode.
             </li>
           </ul>
 
-          <div class="mockup-frame" style="margin-top: 18px; min-height: 190px">
+          <div class="mockup-frame" style="margin-top: 18px">
             <div
               class="screen-header"
               style="margin: 0; height: 36px; justify-content: flex-end"
@@ -1155,23 +1132,6 @@
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div
-              class="lists-container"
-              style="margin-top: 10px; min-height: 112px"
-            >
-              <div
-                class="list-detail-empty"
-                style="
-                  min-height: 112px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                "
-              >
-                <div class="list-detail-empty-copy">Empty content surface</div>
               </div>
             </div>
           </div>
@@ -1272,7 +1232,7 @@
                 <div class="list-drawer" data-id="selected-demo">
                   <button class="drawer-action primary" type="button">
                     <span>Start</span>
-                    <i data-feather="play"></i>
+                    <i data-feather="target"></i>
                   </button>
                   <button class="drawer-action" type="button">
                     <span>Edit</span>
@@ -1394,7 +1354,8 @@
       <footer class="page-footer" aria-label="Page footer shortcuts">
         <a class="back-to-top" href="#top">Back to top</a>
         <p class="footer-meta">
-          &copy; 2026 Abby Skofield. Loglist Design System. All rights reserved.
+          &copy; 2026 Abby Skofield. ObservationTracker Design System. All
+          rights reserved.
         </p>
         <div class="hero-links">
           <nav class="hero-toc" aria-label="Token shortcuts footer">

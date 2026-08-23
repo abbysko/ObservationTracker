@@ -8,9 +8,12 @@
   let chooserSelectedListId = null;
   let chooserMenuOpen = false;
   let routeStateApplied = false;
-  let handleExitRequest = null;
-  let activeExitDialog = null;
+  let handleSaveRequest = null;
   let editingActiveSessionName = false;
+
+  function emitTrackingStateChanged() {
+    window.dispatchEvent(new CustomEvent('ot-tracking-state-changed'));
+  }
 
   function escapeHtml(s) {
     return String(s)
@@ -175,6 +178,7 @@
     }
 
     if (options.resetCounts) clearTrackCounts(list.id);
+    emitTrackingStateChanged();
   }
 
   function clearActiveTrackingList() {
@@ -187,6 +191,7 @@
     sessionStorage.removeItem('ot_restart_history_list_id');
     editingActiveSessionName = false;
     chooserMenuOpen = false;
+    emitTrackingStateChanged();
   }
 
   function buildSessionEntry(list, normalized, counts) {
@@ -247,51 +252,11 @@
     return savedSession;
   }
 
-  function showActiveSessionExitDialog() {
-    if (activeExitDialog) return activeExitDialog;
-
-    activeExitDialog = new Promise((resolve) => {
-      const backdrop = document.createElement('div');
-      backdrop.className = 'session-exit-backdrop';
-      backdrop.innerHTML = `
-        <div class="session-exit-dialog" role="dialog" aria-modal="true" aria-label="Leave active session">
-          <div class="session-exit-title">Leave active session?</div>
-          <div class="session-exit-copy">Choose how to proceed.</div>
-          <div class="session-exit-actions">
-            <button type="button" class="drawer-action" data-choice="keep">Oops, keep tracking</button>
-            <button type="button" class="drawer-action primary" data-choice="save">Save session</button>
-          </div>
-          <div class="session-exit-copy">To delete this session, select save and then delete it on the History page.</div>
-        </div>
-      `;
-
-      const close = (choice) => {
-        backdrop.remove();
-        activeExitDialog = null;
-        resolve(choice);
-      };
-
-      backdrop.querySelectorAll('[data-choice]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          close(btn.getAttribute('data-choice'));
-        });
-      });
-
-      document.body.appendChild(backdrop);
-    });
-
-    return activeExitDialog;
-  }
-
-  async function requestActiveSessionExit(
+  async function saveActiveSessionAndShowHistoryDetail(
     list,
     normalized,
-    counts,
-    targetScreen
+    counts
   ) {
-    const choice = await showActiveSessionExitDialog();
-    if (choice !== 'save') return;
-
     const savedSession = await completeActiveSession(
       list,
       normalized,
@@ -299,22 +264,13 @@
       true
     );
 
-    if (choice === 'save' && targetScreen === 'track') {
-      if (window._obs && typeof window._obs.setScreen === 'function') {
-        window._obs.setScreen('history', {
-          routeParams: {
-            listId: savedSession?.id || '',
-          },
-        });
-        return;
-      }
-    }
-
-    if (targetScreen && targetScreen !== 'track') {
-      if (window._obs && typeof window._obs.setScreen === 'function') {
-        window._obs.setScreen(targetScreen);
-        return;
-      }
+    if (window._obs && typeof window._obs.setScreen === 'function') {
+      window._obs.setScreen('history', {
+        routeParams: {
+          listId: savedSession?.id || '',
+        },
+      });
+      return;
     }
 
     syncTrackRoute(null);
@@ -392,6 +348,9 @@
       0
     );
     let notYetObservedCount = Math.max(0, totalItems - observedCount);
+    handleSaveRequest = async () => {
+      await saveActiveSessionAndShowHistoryDetail(list, normalized, counts);
+    };
     const observedPercent =
       totalItems > 0 ? (observedCount / totalItems) * 100 : 0;
     const observedPercentLabel = `${Math.round(observedPercent)}%`;
@@ -427,13 +386,21 @@
     container.innerHTML = `
       <div class="screen-header">
         <h1 class="detail-breadcrumb">
-          <a href="#" class="list-breadcrumb-link track-breadcrumb-root" aria-label="Back to track list picker">Track</a>
+          <span class="breadcrumb-current track-breadcrumb-root">Track</span>
           <span class="breadcrumb-sep">&gt;</span>
           ${breadcrumbSessionNameMarkup}
         </h1>
-        <button class="add-button track-add-item-button" type="button" aria-label="Add item to this list">
-          <i data-feather="plus"></i>
-        </button>
+        <div class="header-controls">
+          <button class="sort-toggle track-add-item-button" type="button" aria-label="Add item to this list">
+            <i data-feather="plus"></i>
+          </button>
+          <button class="sort-toggle track-undo-button" type="button" aria-label="Undo last observation" disabled>
+            <i data-feather="rotate-ccw"></i>
+          </button>
+          <button class="add-button track-end-session-button" type="button" aria-label="End active tracking session">
+            <i data-feather="save"></i>
+          </button>
+        </div>
       </div>
       <div class="track-progress" aria-label="Observation progress">
         <div class="track-progress-meta">
@@ -456,23 +423,7 @@
             : '<div class="track-empty">This list has no items to track.</div>'
         }
       </div>
-      <div class="track-session-actions">
-        <button class="drawer-action track-undo-button" type="button" aria-label="Undo last observation" disabled>
-          <span>Undo</span><i data-feather="corner-down-left"></i>
-        </button>
-        <button class="drawer-action primary track-end-session-button" type="button" aria-label="End active tracking session">
-          <span>End Session</span><i data-feather="stop-circle"></i>
-        </button>
-      </div>
     `;
-
-    const root = container.querySelector('.track-breadcrumb-root');
-    if (root) {
-      root.addEventListener('click', async (e) => {
-        e.preventDefault();
-        await requestActiveSessionExit(list, normalized, counts, 'track');
-      });
-    }
 
     const sessionNameCurrent = container.querySelector(
       '.track-session-name-current'
@@ -639,7 +590,7 @@
 
     if (endSessionButton) {
       endSessionButton.addEventListener('click', async () => {
-        await requestActiveSessionExit(list, normalized, counts, 'track');
+        await saveActiveSessionAndShowHistoryDetail(list, normalized, counts);
       });
     }
 
@@ -763,14 +714,10 @@
         writeTrackCounts(list?.id, counts);
       });
     });
-
-    handleExitRequest = async (targetScreen) => {
-      await requestActiveSessionExit(list, normalized, counts, targetScreen);
-    };
   }
 
   function renderChooserState(lists) {
-    handleExitRequest = null;
+    handleSaveRequest = null;
     const safeLists = Array.isArray(lists) ? lists : [];
 
     const matchedSelected = safeLists.find(
@@ -857,7 +804,7 @@
           )}" aria-label="Start session for ${escapeAttr(selected.name)}" ${
       selectedCount === 0 ? 'disabled' : ''
     }>
-            <span>Start Session</span><i data-feather="target"></i>
+            <span>Start Session</span><i data-feather="play"></i>
           </button>
         </div>
       </div>
@@ -938,9 +885,8 @@
     console.warn('Failed to render track screen', err);
   });
 
-  window.addEventListener('ot-active-session-exit-request', async (evt) => {
-    const targetScreen = String(evt?.detail?.targetScreen || '').trim();
-    if (!handleExitRequest) return;
-    await handleExitRequest(targetScreen);
+  window.addEventListener('ot-active-session-save-request', async () => {
+    if (!handleSaveRequest) return;
+    await handleSaveRequest();
   });
 })();
