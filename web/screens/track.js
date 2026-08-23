@@ -4,12 +4,14 @@
   const container = document.querySelector('.screen-track');
   if (!container) return;
   const TRACK_COUNT_PREFIX = 'ot_track_counts_v1_';
+  const TRACK_GRID_REORDER_DELAY_MS = 1000;
   const ACTIVE_SESSION_NAME_KEY = 'ot_active_session_name';
   let chooserSelectedListId = null;
   let chooserMenuOpen = false;
   let routeStateApplied = false;
   let handleSaveRequest = null;
   let editingActiveSessionName = false;
+  let trackGridReorderTimeout = null;
 
   function emitTrackingStateChanged() {
     window.dispatchEvent(new CustomEvent('ot-tracking-state-changed'));
@@ -34,6 +36,27 @@
         console.warn('feather.replace failed on track screen', err);
       }
     }
+  }
+
+  function scheduleTrackGridReorder(grid) {
+    if (trackGridReorderTimeout) {
+      clearTimeout(trackGridReorderTimeout);
+    }
+
+    trackGridReorderTimeout = setTimeout(() => {
+      trackGridReorderTimeout = null;
+      if (!grid || !grid.isConnected) return;
+
+      const buttons = Array.from(grid.querySelectorAll('.track-grid-button'));
+      buttons
+        .sort((a, b) => {
+          const countDifference =
+            Number(b.getAttribute('data-count') || 0) -
+            Number(a.getAttribute('data-count') || 0);
+          return countDifference;
+        })
+        .forEach((button) => grid.appendChild(button));
+    }, TRACK_GRID_REORDER_DELAY_MS);
   }
 
   function getCountStorageKey(listId) {
@@ -355,7 +378,11 @@
       totalItems > 0 ? (observedCount / totalItems) * 100 : 0;
     const observedPercentLabel = `${Math.round(observedPercent)}%`;
 
-    const gridMarkup = normalized
+    const ordered = [...normalized].sort(
+      (a, b) => Number(counts[b.key] || 0) - Number(counts[a.key] || 0)
+    );
+
+    const gridMarkup = ordered
       .map((item) => {
         const count = Number(counts[item.key] || 0);
         const countMarkup =
@@ -652,6 +679,9 @@
         setUndoEnabled(undoStack.length > 0);
 
         writeTrackCounts(list?.id, counts);
+
+        const grid = btn.closest('.track-grid');
+        scheduleTrackGridReorder(grid);
       });
     });
   }
