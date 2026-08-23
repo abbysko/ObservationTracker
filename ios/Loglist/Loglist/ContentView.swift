@@ -2,9 +2,36 @@ import SwiftUI
 import WebKit
 
 struct ContentView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        LoglistWebView()
-            .ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                pageBackgroundColor
+                    .ignoresSafeArea(edges: .top)
+                LoglistWebView()
+
+                navigationBackgroundColor
+                    .frame(height: geometry.safeAreaInsets.bottom)
+                    .offset(y: geometry.safeAreaInsets.bottom)
+            }
+        }
+    }
+
+    private var pageBackgroundColor: Color {
+        Color(
+            red: colorScheme == .dark ? 0.043 : 0.969,
+            green: colorScheme == .dark ? 0.043 : 0.969,
+            blue: colorScheme == .dark ? 0.047 : 0.973
+        )
+    }
+
+    private var navigationBackgroundColor: Color {
+        Color(
+            red: colorScheme == .dark ? 0.138 : 0.909,
+            green: colorScheme == .dark ? 0.139 : 0.909,
+            blue: colorScheme == .dark ? 0.200 : 0.992
+        )
     }
 }
 
@@ -28,6 +55,9 @@ private struct LoglistWebView: UIViewRepresentable {
         )
         webView.uiDelegate = context.coordinator
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
+        webView.scrollView.bounces = false
+        webView.scrollView.alwaysBounceVertical = false
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
 
         let startURL = URL(string: "loglist://app/index.html")!
         webView.load(URLRequest(url: startURL))
