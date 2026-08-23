@@ -34,6 +34,73 @@ const nameHelpers = {
 };
 window._obsNameHelpers = nameHelpers;
 
+function attachRenameInput(input, options = {}) {
+  if (!input) return;
+
+  let done = false;
+  let skipNextBlurSave = false;
+
+  const focusAndSelect = () => {
+    try {
+      input.focus();
+      input.select();
+    } catch (err) {
+      console.warn('Failed to focus rename input', err);
+    }
+  };
+
+  const finalize = async (shouldSave) => {
+    if (done) return;
+
+    if (shouldSave && typeof options.validate === 'function') {
+      const result = await options.validate(input.value);
+      if (!result || !result.ok) {
+        skipNextBlurSave = true;
+        window.alert(result?.message || 'Name cannot be empty.');
+        setTimeout(focusAndSelect, 0);
+        return;
+      }
+
+      if (typeof options.save === 'function') {
+        await options.save(result.value);
+      }
+    }
+
+    done = true;
+    if (!shouldSave && typeof options.onCancel === 'function') {
+      options.onCancel();
+    }
+    if (typeof options.rerender === 'function') {
+      await options.rerender();
+    }
+  };
+
+  input.addEventListener('click', (event) => event.stopPropagation());
+  input.addEventListener('keydown', async (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      await finalize(true);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      await finalize(false);
+    }
+  });
+  input.addEventListener('blur', async () => {
+    if (skipNextBlurSave) {
+      skipNextBlurSave = false;
+      return;
+    }
+    await finalize(true);
+  });
+
+  focusAndSelect();
+  setTimeout(focusAndSelect, 0);
+}
+
+window._obsRename = {
+  attachInput: attachRenameInput,
+};
+
 let breadcrumbFitRaf = null;
 
 function fitDetailBreadcrumb(el) {

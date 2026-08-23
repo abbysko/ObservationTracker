@@ -221,7 +221,7 @@
     }
 
     // attach handlers for the rows and the add button
-    attachHandlers();
+    attachHandlers(lists);
 
     sortToggle.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -246,7 +246,7 @@
 
     add.addEventListener('click', async () => {
       // simple create flow: create a named list and save it
-      const existing = await window.repository.loadLists();
+      const existing = lists;
       let base = 'New List';
       let name = base;
       let n = 1;
@@ -260,10 +260,11 @@
         builtIn: false,
         items: [],
       };
-      await window.repository.saveList(newList);
+      window.repository.saveList(newList);
       selectedListId = newList.id;
       editingListId = newList.id;
-      await rerenderFromRepository();
+      existing.push(newList);
+      render(existing);
     });
   }
 
@@ -404,99 +405,41 @@
       breadcrumbCurrent.addEventListener('click', async (e) => {
         e.stopPropagation();
         editingListId = breadcrumbCurrent.getAttribute('data-id');
-        const refreshed = await window.repository.loadLists();
-        render(refreshed);
+        renderDetailView(container, list);
       });
     }
 
     const breadcrumbInput = container.querySelector('.detail-breadcrumb-input');
     if (breadcrumbInput) {
-      let done = false;
-      let skipNextBlurSave = false;
-
-      const finalizeBreadcrumbRename = async (shouldSave) => {
-        if (done) return;
-
-        if (shouldSave) {
-          const normalized = normalizeRenameValue(breadcrumbInput.value);
-          if (!normalized.ok) {
-            skipNextBlurSave = true;
-            window.alert(normalized.message);
-            setTimeout(() => {
-              try {
-                breadcrumbInput.focus();
-                breadcrumbInput.select();
-              } catch (err) {
-                console.warn('Failed to refocus breadcrumb input', err);
-              }
-            }, 0);
-            return;
+      window._obsRename.attachInput(breadcrumbInput, {
+        validate: async (value) => {
+          const normalized = normalizeRenameValue(value);
+          if (!normalized.ok) return normalized;
+          const refreshed = await window.repository.loadLists();
+          if (hasDuplicateListName(refreshed, normalized.value, detailListId)) {
+            return { ok: false, message: 'List name must be unique.' };
           }
-
-          const nextName = normalized.value;
-          if (nextName) {
-            const refreshed = await window.repository.loadLists();
-            if (hasDuplicateListName(refreshed, nextName, detailListId)) {
-              skipNextBlurSave = true;
-              window.alert('List name must be unique.');
-              setTimeout(() => {
-                try {
-                  breadcrumbInput.focus();
-                  breadcrumbInput.select();
-                } catch (err) {
-                  console.warn('Failed to refocus breadcrumb input', err);
-                }
-              }, 0);
-              return;
-            }
-            const nextList = refreshed.find((x) => x.id === detailListId);
-            if (nextList && !nextList.builtIn) {
-              nextList.name = nextName;
-              await window.repository.saveList(nextList);
-            }
+          return normalized;
+        },
+        save: async (nextName) => {
+          const refreshed = await window.repository.loadLists();
+          const nextList = refreshed.find((x) => x.id === detailListId);
+          if (nextList && !nextList.builtIn) {
+            nextList.name = nextName;
+            await window.repository.saveList(nextList);
           }
-        }
-
-        done = true;
-
-        editingListId = null;
-        const refreshed2 = await window.repository.loadLists();
-        render(refreshed2);
-      };
-
-      breadcrumbInput.addEventListener('click', (e) => e.stopPropagation());
-      breadcrumbInput.addEventListener('keydown', async (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          await finalizeBreadcrumbRename(true);
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          await finalizeBreadcrumbRename(false);
-        }
+        },
+        rerender: async () => {
+          editingListId = null;
+          render(await window.repository.loadLists());
+        },
       });
-      breadcrumbInput.addEventListener('blur', async () => {
-        if (skipNextBlurSave) {
-          skipNextBlurSave = false;
-          return;
-        }
-        await finalizeBreadcrumbRename(true);
-      });
-
-      setTimeout(() => {
-        try {
-          breadcrumbInput.focus();
-          breadcrumbInput.select();
-        } catch (err) {
-          console.warn('Failed to focus breadcrumb input', err);
-        }
-      }, 0);
     }
 
     const detailAdd = container.querySelector('.screen-header .add-button');
     if (detailAdd) {
       detailAdd.addEventListener('click', async () => {
-        const refreshed = await window.repository.loadLists();
-        const nextList = refreshed.find((x) => x.id === detailListId);
+        const nextList = list;
         if (!nextList || nextList.builtIn) return;
 
         const existingItems = Array.isArray(nextList.items)
@@ -519,11 +462,10 @@
         };
 
         nextList.items = existingItems.concat(newItem);
-        await window.repository.saveList(nextList);
+        window.repository.saveList(nextList);
         selectedDetailItemIndex = nextList.items.length - 1;
         editingDetailItemIndex = nextList.items.length - 1;
-        const refreshed2 = await window.repository.loadLists();
-        render(refreshed2);
+        renderDetailView(container, nextList);
       });
     }
 
@@ -734,103 +676,44 @@
           const index = Number(label.getAttribute('data-item-index'));
           if (Number.isNaN(index)) return;
           editingDetailItemIndex = index;
-          await reload();
+          renderDetailView(container, list);
         });
       });
 
     container.querySelectorAll('.detail-item-input').forEach((input) => {
       const index = Number(input.getAttribute('data-item-index'));
-      let done = false;
-      let skipNextBlurSave = false;
-
-      const finalize = async (shouldSave) => {
-        if (done) return;
-
-        if (shouldSave && !Number.isNaN(index)) {
-          const normalized = normalizeRenameValue(input.value);
-          if (!normalized.ok) {
-            skipNextBlurSave = true;
-            window.alert(normalized.message);
-            setTimeout(() => {
-              try {
-                input.focus();
-                input.select();
-              } catch (err) {
-                console.warn('Failed to refocus detail item input', err);
-              }
-            }, 0);
-            return;
+      window._obsRename.attachInput(input, {
+        validate: async (value) => {
+          const normalized = normalizeRenameValue(value);
+          if (!normalized.ok) return normalized;
+          const lists = await window.repository.loadLists();
+          const nextList = lists.find((x) => x.id === detailListId);
+          if (nextList && hasDuplicateItemName(nextList.items, normalized.value, index)) {
+            return {
+              ok: false,
+              message: 'Item name must be unique within this list.',
+            };
           }
-
-          const nextName = normalized.value;
-          if (nextName) {
-            const lists = await window.repository.loadLists();
-            const nextList = lists.find((x) => x.id === detailListId);
-            if (
-              nextList &&
-              !nextList.builtIn &&
-              Array.isArray(nextList.items)
-            ) {
-              const nextItems = [...nextList.items];
-              if (hasDuplicateItemName(nextItems, nextName, index)) {
-                skipNextBlurSave = true;
-                window.alert('Item name must be unique within this list.');
-                setTimeout(() => {
-                  try {
-                    input.focus();
-                    input.select();
-                  } catch (err) {
-                    console.warn('Failed to refocus detail item input', err);
-                  }
-                }, 0);
-                return;
-              }
-              const existing = nextItems[index];
-              if (typeof existing === 'string') nextItems[index] = nextName;
-              else if (existing && typeof existing === 'object') {
-                nextItems[index] = {
-                  ...existing,
-                  name: nextName,
-                };
-              }
-              nextList.items = nextItems;
-              await window.repository.saveList(nextList);
-            }
+          return normalized;
+        },
+        save: async (nextName) => {
+          const lists = await window.repository.loadLists();
+          const nextList = lists.find((x) => x.id === detailListId);
+          if (!nextList || nextList.builtIn || !Array.isArray(nextList.items)) return;
+          const nextItems = [...nextList.items];
+          const existing = nextItems[index];
+          if (typeof existing === 'string') nextItems[index] = nextName;
+          else if (existing && typeof existing === 'object') {
+            nextItems[index] = { ...existing, name: nextName };
           }
-        }
-
-        done = true;
-
-        editingDetailItemIndex = null;
-        await reload();
-      };
-
-      input.addEventListener('click', (e) => e.stopPropagation());
-      input.addEventListener('keydown', async (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          await finalize(true);
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          await finalize(false);
-        }
+          nextList.items = nextItems;
+          await window.repository.saveList(nextList);
+        },
+        rerender: async () => {
+          editingDetailItemIndex = null;
+          await reload();
+        },
       });
-      input.addEventListener('blur', async () => {
-        if (skipNextBlurSave) {
-          skipNextBlurSave = false;
-          return;
-        }
-        await finalize(true);
-      });
-
-      setTimeout(() => {
-        try {
-          input.focus();
-          input.select();
-        } catch (err) {
-          console.warn('Failed to focus detail item input', err);
-        }
-      }, 0);
     });
 
     container.querySelectorAll('.detail-item-delete').forEach((btn) => {
@@ -927,7 +810,7 @@
     return drawer;
   }
 
-  function attachHandlers() {
+  function attachHandlers(lists) {
     document.querySelectorAll('.list-row').forEach((row) => {
       row.addEventListener('click', async () => {
         const id = row.getAttribute('data-id');
@@ -940,94 +823,38 @@
 
     document.querySelectorAll('.list-title.editable').forEach((title) => {
       title.addEventListener('click', async (e) => {
+        e.preventDefault();
         e.stopPropagation();
         editingListId = title.getAttribute('data-id');
-        const refreshed = await window.repository.loadLists();
-        render(refreshed);
+        render(lists);
       });
     });
 
     document.querySelectorAll('.list-title-input').forEach((input) => {
       const id = input.getAttribute('data-id');
-      let done = false;
-      let skipNextBlurSave = false;
-
-      const finalize = async (shouldSave) => {
-        if (done) return;
-
-        if (shouldSave) {
-          const normalized = normalizeRenameValue(input.value);
-          if (!normalized.ok) {
-            skipNextBlurSave = true;
-            window.alert(normalized.message);
-            setTimeout(() => {
-              try {
-                input.focus();
-                input.select();
-              } catch (err) {
-                console.warn('Failed to refocus inline title input', err);
-              }
-            }, 0);
-            return;
+      window._obsRename.attachInput(input, {
+        validate: async (value) => {
+          const normalized = normalizeRenameValue(value);
+          if (!normalized.ok) return normalized;
+          const lists = await window.repository.loadLists();
+          if (hasDuplicateListName(lists, normalized.value, id)) {
+            return { ok: false, message: 'List name must be unique.' };
           }
-
-          const nextName = normalized.value;
-          if (nextName) {
-            const lists = await window.repository.loadLists();
-            if (hasDuplicateListName(lists, nextName, id)) {
-              skipNextBlurSave = true;
-              window.alert('List name must be unique.');
-              setTimeout(() => {
-                try {
-                  input.focus();
-                  input.select();
-                } catch (err) {
-                  console.warn('Failed to refocus inline title input', err);
-                }
-              }, 0);
-              return;
-            }
-            const list = lists.find((x) => x.id === id);
-            if (list && !list.builtIn) {
-              list.name = nextName;
-              await window.repository.saveList(list);
-            }
+          return normalized;
+        },
+        save: async (nextName) => {
+          const lists = await window.repository.loadLists();
+          const list = lists.find((x) => x.id === id);
+          if (list && !list.builtIn) {
+            list.name = nextName;
+            await window.repository.saveList(list);
           }
-        }
-
-        done = true;
-
-        editingListId = null;
-        const refreshed = await window.repository.loadLists();
-        render(refreshed);
-      };
-
-      input.addEventListener('click', (e) => e.stopPropagation());
-      input.addEventListener('keydown', async (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          await finalize(true);
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          await finalize(false);
-        }
+        },
+        rerender: async () => {
+          editingListId = null;
+          render(await window.repository.loadLists());
+        },
       });
-      input.addEventListener('blur', async () => {
-        if (skipNextBlurSave) {
-          skipNextBlurSave = false;
-          return;
-        }
-        await finalize(true);
-      });
-
-      setTimeout(() => {
-        try {
-          input.focus();
-          input.select();
-        } catch (err) {
-          console.warn('Failed to focus inline title input', err);
-        }
-      }, 0);
     });
 
     document.querySelectorAll('.row-delete').forEach((btn) => {

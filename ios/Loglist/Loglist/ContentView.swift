@@ -96,5 +96,40 @@ private struct LoglistWebView: UIViewRepresentable {
             )
             presenter.present(alert, animated: true)
         }
+
+        func webView(
+            _ webView: WKWebView,
+            runJavaScriptTextInputPanelWithPrompt prompt: String,
+            defaultText: String?,
+            initiatedByFrame frame: WKFrameInfo,
+            completionHandler: @escaping (String?) -> Void
+        ) {
+            guard let presenter = webView.window?.rootViewController else {
+                completionHandler(nil)
+                return
+            }
+
+            let alert = UIAlertController(
+                title: nil,
+                message: prompt,
+                preferredStyle: .alert
+            )
+            alert.addTextField { textField in
+                textField.text = defaultText
+            }
+            alert.addAction(
+                UIAlertAction(title: "Cancel", style: .cancel) { _ in
+                    completionHandler(nil)
+                }
+            )
+            alert.addAction(
+                UIAlertAction(title: "OK", style: .default) { _ in
+                    completionHandler(alert.textFields?.first?.text)
+                }
+            )
+            presenter.present(alert, animated: true) {
+                alert.textFields?.first?.becomeFirstResponder()
+            }
+        }
     }
 }

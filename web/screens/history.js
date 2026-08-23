@@ -634,7 +634,7 @@
           if (!id) return;
           listSelectedSessionId = id;
           editingSessionId = id;
-          await renderHistory();
+          renderListView(sessions);
         });
       });
 
@@ -642,110 +642,29 @@
       .querySelectorAll('.history-session-title-input')
       .forEach((input) => {
         const id = input.getAttribute('data-id');
-        let done = false;
-        let skipNextBlurSave = false;
-
-        const finalize = async (shouldSave) => {
-          if (done) return;
-
-          if (shouldSave) {
-            const normalized = normalizeRenameValue(input.value);
-            if (!normalized.ok) {
-              skipNextBlurSave = true;
-              window.alert(normalized.message);
-              setTimeout(() => {
-                try {
-                  input.focus();
-                  input.select();
-                } catch (err) {
-                  console.warn('Failed to refocus session title input', err);
-                }
-              }, 0);
-              return;
+        window._obsRename.attachInput(input, {
+          validate: async (value) => {
+            const normalized = normalizeRenameValue(value);
+            if (!normalized.ok) return normalized;
+            const sessionsFromRepo = await window.repository.loadHistory();
+            if (hasDuplicateSessionName(sessionsFromRepo, normalized.value, id)) {
+              return { ok: false, message: 'Session name must be unique.' };
             }
-
-            const nextName = normalized.value;
-            if (nextName) {
-              const sessionsFromRepo =
-                window.repository &&
-                typeof window.repository.loadHistory === 'function'
-                  ? await window.repository.loadHistory()
-                  : [];
-
-              if (hasDuplicateSessionName(sessionsFromRepo, nextName, id)) {
-                skipNextBlurSave = true;
-                window.alert('Session name must be unique.');
-                setTimeout(() => {
-                  try {
-                    input.focus();
-                    input.select();
-                  } catch (err) {
-                    console.warn('Failed to refocus session title input', err);
-                  }
-                }, 0);
-                return;
-              }
-
-              if (
-                window.repository &&
-                typeof window.repository.renameHistorySession === 'function'
-              ) {
-                const updated = await window.repository.renameHistorySession(
-                  id,
-                  nextName
-                );
-                if (!updated) {
-                  skipNextBlurSave = true;
-                  window.alert('Session name must be unique.');
-                  setTimeout(() => {
-                    try {
-                      input.focus();
-                      input.select();
-                    } catch (err) {
-                      console.warn(
-                        'Failed to refocus session title input',
-                        err
-                      );
-                    }
-                  }, 0);
-                  return;
-                }
-              }
-            }
-          }
-
-          done = true;
-          editingSessionId = null;
-          listSelectedSessionId = id || null;
-          await renderHistory();
-        };
-
-        input.addEventListener('click', (e) => e.stopPropagation());
-        input.addEventListener('keydown', async (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            await finalize(true);
-          } else if (e.key === 'Escape') {
-            e.preventDefault();
-            await finalize(false);
-          }
+            return normalized;
+          },
+          save: async (nextName) => {
+            const updated = await window.repository.renameHistorySession(
+              id,
+              nextName
+            );
+            if (!updated) throw new Error('Session name must be unique.');
+          },
+          rerender: async () => {
+            editingSessionId = null;
+            listSelectedSessionId = id || null;
+            await renderHistory();
+          },
         });
-        input.addEventListener('blur', async () => {
-          if (skipNextBlurSave) {
-            skipNextBlurSave = false;
-            return;
-          }
-          await finalize(true);
-        });
-
-        setTimeout(() => {
-          try {
-            input.focus();
-            input.select();
-          } catch (err) {
-            console.warn('Failed to focus session title input', err);
-          }
-        }, 0);
       });
 
     container.querySelectorAll('.history-session-action').forEach((btn) => {
@@ -909,115 +828,35 @@
       breadcrumbCurrent.addEventListener('click', async (e) => {
         e.stopPropagation();
         editingSessionId = breadcrumbCurrent.getAttribute('data-id');
-        await renderHistory();
+        renderDetailView(session);
       });
     }
 
     const breadcrumbInput = container.querySelector('.detail-breadcrumb-input');
     if (breadcrumbInput) {
-      let done = false;
-      let skipNextBlurSave = false;
-
-      const finalizeSessionRename = async (shouldSave) => {
-        if (done) return;
-
-        if (shouldSave) {
-          const normalized = normalizeRenameValue(breadcrumbInput.value);
-          if (!normalized.ok) {
-            skipNextBlurSave = true;
-            window.alert(normalized.message);
-            setTimeout(() => {
-              try {
-                breadcrumbInput.focus();
-                breadcrumbInput.select();
-              } catch (err) {
-                console.warn('Failed to refocus history breadcrumb input', err);
-              }
-            }, 0);
-            return;
+      window._obsRename.attachInput(breadcrumbInput, {
+        validate: async (value) => {
+          const normalized = normalizeRenameValue(value);
+          if (!normalized.ok) return normalized;
+          const sessions = await window.repository.loadHistory();
+          if (hasDuplicateSessionName(sessions, normalized.value, session.id)) {
+            return { ok: false, message: 'Session name must be unique.' };
           }
-
-          const nextName = normalized.value;
-          if (nextName && nextName !== title) {
-            if (
-              window.repository &&
-              typeof window.repository.renameHistorySession === 'function' &&
-              typeof window.repository.loadHistory === 'function'
-            ) {
-              const sessions = await window.repository.loadHistory();
-              if (hasDuplicateSessionName(sessions, nextName, session.id)) {
-                skipNextBlurSave = true;
-                window.alert('Session name must be unique.');
-                setTimeout(() => {
-                  try {
-                    breadcrumbInput.focus();
-                    breadcrumbInput.select();
-                  } catch (err) {
-                    console.warn(
-                      'Failed to refocus history breadcrumb input',
-                      err
-                    );
-                  }
-                }, 0);
-                return;
-              }
-
-              const updated = await window.repository.renameHistorySession(
-                session.id,
-                nextName
-              );
-              if (!updated) {
-                skipNextBlurSave = true;
-                window.alert('Session name must be unique.');
-                setTimeout(() => {
-                  try {
-                    breadcrumbInput.focus();
-                    breadcrumbInput.select();
-                  } catch (err) {
-                    console.warn(
-                      'Failed to refocus history breadcrumb input',
-                      err
-                    );
-                  }
-                }, 0);
-                return;
-              }
-            }
-          }
-        }
-
-        done = true;
-
-        editingSessionId = null;
-        await renderHistory();
-      };
-
-      breadcrumbInput.addEventListener('click', (e) => e.stopPropagation());
-      breadcrumbInput.addEventListener('keydown', async (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          await finalizeSessionRename(true);
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          await finalizeSessionRename(false);
-        }
+          return normalized;
+        },
+        save: async (nextName) => {
+          if (nextName === title) return;
+          const updated = await window.repository.renameHistorySession(
+            session.id,
+            nextName
+          );
+          if (!updated) throw new Error('Session name must be unique.');
+        },
+        rerender: async () => {
+          editingSessionId = null;
+          await renderHistory();
+        },
       });
-      breadcrumbInput.addEventListener('blur', async () => {
-        if (skipNextBlurSave) {
-          skipNextBlurSave = false;
-          return;
-        }
-        await finalizeSessionRename(true);
-      });
-
-      setTimeout(() => {
-        try {
-          breadcrumbInput.focus();
-          breadcrumbInput.select();
-        } catch (err) {
-          console.warn('Failed to focus history breadcrumb input', err);
-        }
-      }, 0);
     }
 
     const restartButton = container.querySelector('.history-detail-restart');
@@ -1095,7 +934,11 @@
     console.warn('Failed to render history screen', err);
     container.innerHTML = `
       <div class="screen-header"><h1>History</h1></div>
-      <div class="lists-container"><div class="track-empty">Unable to load history right now.</div></div>
+      <div class="lists-container">
+        <div class="track-empty">
+          Unable to load history right now: ${escapeHtml(err?.message || err)}
+        </div>
+      </div>
     `;
   });
 })();

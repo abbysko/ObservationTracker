@@ -441,98 +441,38 @@
       '.track-session-name-input'
     );
     if (sessionNameInput) {
-      let done = false;
-      let skipNextBlurSave = false;
-
-      const finalizeSessionName = async (shouldSave) => {
-        if (done) return;
-
-        if (shouldSave) {
-          const normalizedName = normalizeRenameValue(sessionNameInput.value);
-          if (!normalizedName.ok) {
-            skipNextBlurSave = true;
-            window.alert(normalizedName.message);
-            setTimeout(() => {
-              try {
-                sessionNameInput.focus();
-                sessionNameInput.select();
-              } catch (err) {
-                console.warn('Failed to refocus track session name input', err);
-              }
-            }, 0);
-            return;
+      window._obsRename.attachInput(sessionNameInput, {
+        validate: async (value) => {
+          const normalizedName = normalizeRenameValue(value);
+          if (!normalizedName.ok) return normalizedName;
+          const restartSessionId = String(
+            sessionStorage.getItem('ot_restart_history_session_id') || ''
+          ).trim();
+          const existingSessions =
+            window.repository &&
+            typeof window.repository.loadHistory === 'function'
+              ? await window.repository.loadHistory()
+              : [];
+          if (
+            hasDuplicateSessionName(
+              existingSessions,
+              normalizedName.value,
+              restartSessionId
+            )
+          ) {
+            return { ok: false, message: 'Session name must be unique.' };
           }
-
-          const nextName = normalizedName.value;
-          if (nextName) {
-            const restartSessionId = String(
-              sessionStorage.getItem('ot_restart_history_session_id') || ''
-            ).trim();
-            const existingSessions =
-              window.repository &&
-              typeof window.repository.loadHistory === 'function'
-                ? await window.repository.loadHistory()
-                : [];
-
-            if (
-              hasDuplicateSessionName(
-                existingSessions,
-                nextName,
-                restartSessionId
-              )
-            ) {
-              skipNextBlurSave = true;
-              window.alert('Session name must be unique.');
-              setTimeout(() => {
-                try {
-                  sessionNameInput.focus();
-                  sessionNameInput.select();
-                } catch (err) {
-                  console.warn(
-                    'Failed to refocus track session name input',
-                    err
-                  );
-                }
-              }, 0);
-              return;
-            }
-
-            setActiveSessionName(nextName);
-          }
-        }
-
-        done = true;
-        editingActiveSessionName = false;
-        renderActiveState(list);
-        renderIcons();
-      };
-
-      sessionNameInput.addEventListener('click', (e) => e.stopPropagation());
-      sessionNameInput.addEventListener('keydown', async (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          await finalizeSessionName(true);
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          await finalizeSessionName(false);
-        }
+          return normalizedName;
+        },
+        save: (nextName) => {
+          setActiveSessionName(nextName);
+        },
+        rerender: () => {
+          editingActiveSessionName = false;
+          renderActiveState(list);
+          renderIcons();
+        },
       });
-      sessionNameInput.addEventListener('blur', async () => {
-        if (skipNextBlurSave) {
-          skipNextBlurSave = false;
-          return;
-        }
-        await finalizeSessionName(true);
-      });
-
-      setTimeout(() => {
-        try {
-          sessionNameInput.focus();
-          sessionNameInput.select();
-        } catch (err) {
-          console.warn('Failed to focus track session name input', err);
-        }
-      }, 0);
     }
 
     const endSessionButton = container.querySelector(
