@@ -793,12 +793,8 @@
       </button>
       <button class="drawer-action" data-action="view-edit" data-id="${
         list.id
-      }" aria-label="${
-      list.builtIn ? 'View items in this list' : 'View and edit this list'
-    }">
-        <span>${
-          list.builtIn ? 'View Items' : 'Edit Items'
-        }</span><i data-feather="edit-3"></i>
+      }" aria-label="View details for this list">
+        <span>Details</span><i data-feather="arrow-right-circle"></i>
       </button>
       <button class="drawer-action" data-action="duplicate" data-id="${
         list.id

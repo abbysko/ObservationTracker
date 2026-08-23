@@ -320,6 +320,51 @@
     `;
   }
 
+  function buildSessionCsv(session) {
+    const escapeCsv = (value) => {
+      const text = String(value ?? '');
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const rows = [
+      ['Data from Loglist app', formatSessionDate(Date.now())],
+      ['Session', session?.listName || 'Session'],
+      ['Ended', formatSessionDate(session?.savedAt || session?.endedAt)],
+      [],
+      ['Item', 'Count'],
+    ];
+    const items = Array.isArray(session?.items) ? session.items : [];
+    items.forEach((item, index) => {
+      rows.push([
+        item?.name || `Item ${index + 1}`,
+        Number(item?.count || 0),
+      ]);
+    });
+    return rows.map((row) => row.map(escapeCsv).join(',')).join('\r\n');
+  }
+
+  function shareSessionCsv(session) {
+    const filename = `${String(session?.listName || 'session')
+      .trim()
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '') || 'session'}-observations.csv`;
+    const csv = buildSessionCsv(session);
+    const shareHandler =
+      window.webkit?.messageHandlers?.shareSession || null;
+
+    if (shareHandler) {
+      shareHandler.postMessage({ filename, csv });
+      return;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   function buildUniqueListName(existingLists, baseName) {
     const safeBase = String(baseName || '').trim() || 'Restarted Session';
     const taken = new Set(
@@ -506,18 +551,23 @@
                   buildProgressSummary(session),
                   'Observation progress summary'
                 )}
-                <div class="history-session-actions-row">
-                  <button class="drawer-action history-session-action" type="button" data-action="view" data-id="${escapeAttr(
-                    session.id || ''
-                  )}" aria-label="Details">
-                    <span>Details</span><i data-feather="arrow-right-circle"></i>
-                  </button>
-                  <button class="drawer-action primary history-session-action" type="button" data-action="restart" data-id="${escapeAttr(
-                    session.id || ''
-                  )}" aria-label="Restart tracking from this session">
-                    <span>Restart</span><i data-feather="play"></i>
-                  </button>
-                </div>
+              </div>
+              <div class="history-session-actions-row">
+                <button class="drawer-action primary history-session-action" type="button" data-action="restart" data-id="${escapeAttr(
+                  session.id || ''
+                )}" aria-label="Restart tracking from this session">
+                  <span>Restart</span><i data-feather="play"></i>
+                </button>
+                <button class="drawer-action history-session-action" type="button" data-action="view" data-id="${escapeAttr(
+                  session.id || ''
+                )}" aria-label="Details">
+                  <span>Details</span><i data-feather="arrow-right-circle"></i>
+                </button>
+                <button class="drawer-action history-session-action" type="button" data-action="download" data-id="${escapeAttr(
+                  session.id || ''
+                )}" aria-label="Download session as CSV">
+                  <span>Download</span><i data-feather="download"></i>
+                </button>
               </div>
             </div>
           `
@@ -693,6 +743,11 @@
           await renderHistory();
           return;
         }
+
+        if (action === 'download') {
+          shareSessionCsv(target);
+          return;
+        }
       });
     });
 
@@ -782,6 +837,9 @@
           <button class="sort-toggle history-detail-delete" type="button" aria-label="Delete this session">
             <i data-feather="trash"></i>
           </button>
+          <button class="sort-toggle history-detail-share" type="button" aria-label="Share session as CSV">
+            <i data-feather="share"></i>
+          </button>
           <button class="add-button history-detail-restart" type="button" aria-label="Restart tracking from this session">
             <i data-feather="play"></i>
           </button>
@@ -795,7 +853,7 @@
           <div class="track-empty history-chart-fallback" hidden>Histogram unavailable right now.</div>
         </div>
       </div>
-      <details class="history-full-list">
+      <details class="history-full-list" open>
         <summary class="history-full-list-summary">All Observations</summary>
         <div class="list-detail-card lists-container history-full-list-card" aria-label="Observed items sorted by count">
           ${
@@ -866,6 +924,13 @@
         if (!restarted) {
           window.alert('Unable to restart tracking from this session.');
         }
+      });
+    }
+
+    const shareButton = container.querySelector('.history-detail-share');
+    if (shareButton) {
+      shareButton.addEventListener('click', () => {
+        shareSessionCsv(session);
       });
     }
 
