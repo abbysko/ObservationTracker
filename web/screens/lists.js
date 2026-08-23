@@ -367,7 +367,7 @@
       <button class="drawer-action primary detail-start-session" type="button" aria-label="Start session for this list" ${
         count === 0 ? 'disabled' : ''
       }>
-        <span>Start Session</span><i data-feather="target"></i>
+        <span>Start Session</span><i data-feather="play"></i>
       </button>
     `;
 
@@ -906,7 +906,7 @@
       }" aria-label="Start tracking this list" ${
       itemCount === 0 ? 'disabled' : ''
     }>
-        <span>Start Session</span><i data-feather="target"></i>
+        <span>Start Session</span><i data-feather="play"></i>
       </button>
       <button class="drawer-action" data-action="view-edit" data-id="${
         list.id

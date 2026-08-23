@@ -8,6 +8,8 @@
   let editingSessionId = null;
   let routeStateApplied = false;
   let detailChart = null;
+  let sortMode = 'recent';
+  let sortMenuOpen = false;
 
   function normalizeRenameValue(rawValue) {
     if (typeof nameHelpers.normalizeRenameValue === 'function') {
@@ -211,11 +213,21 @@
   }
 
   function sortSessions(sessions) {
-    return [...(Array.isArray(sessions) ? sessions : [])].sort(
-      (a, b) =>
-        Number(b.savedAt || b.endedAt || 0) -
-        Number(a.savedAt || a.endedAt || 0)
+    const sorted = [...(Array.isArray(sessions) ? sessions : [])].sort(
+      (a, b) => {
+        const aTime = Number(a.savedAt || a.endedAt || 0);
+        const bTime = Number(b.savedAt || b.endedAt || 0);
+        const aName = normalizeNameKey(a?.listName || '');
+        const bName = normalizeNameKey(b?.listName || '');
+        if (sortMode === 'alphabetical') {
+          if (aName !== bName) return aName.localeCompare(bName);
+          return bTime - aTime;
+        }
+        if (sortMode === 'oldest') return aTime - bTime;
+        return bTime - aTime;
+      }
     );
+    return sorted;
   }
 
   function normalizeObservedItems(session) {
@@ -503,7 +515,7 @@
                   <button class="drawer-action primary history-session-action" type="button" data-action="restart" data-id="${escapeAttr(
                     session.id || ''
                   )}" aria-label="Restart tracking from this session">
-                    <span>Restart</span><i data-feather="target"></i>
+                    <span>Restart</span><i data-feather="play"></i>
                   </button>
                 </div>
               </div>
@@ -530,11 +542,65 @@
       .join('');
 
     container.innerHTML = `
-      <div class="screen-header"><h1>History</h1></div>
+      <div class="screen-header">
+        <h1>History</h1>
+        <div class="header-controls">
+          <div class="sort-menu-wrap">
+            <button class="sort-toggle history-sort-toggle" type="button" aria-label="Sort sessions (${
+              sortMode === 'oldest'
+                ? 'Oldest First'
+                : sortMode === 'alphabetical'
+                ? 'Alphabetical'
+                : 'Recent First'
+            })" aria-expanded="${sortMenuOpen ? 'true' : 'false'}">
+              <i data-feather="sliders"></i>
+            </button>
+            ${
+              sortMenuOpen
+                ? `<div class="sort-menu history-sort-menu">
+              <button class="sort-option ${
+                sortMode === 'recent' ? 'active' : ''
+              }" type="button" data-sort="recent">Recent First</button>
+              <button class="sort-option ${
+                sortMode === 'oldest' ? 'active' : ''
+              }" type="button" data-sort="oldest">Oldest First</button>
+              <button class="sort-option ${
+                sortMode === 'alphabetical' ? 'active' : ''
+              }" type="button" data-sort="alphabetical">Alphabetical</button>
+            </div>`
+                : ''
+            }
+          </div>
+        </div>
+      </div>
       <div class="lists-container" aria-label="Saved sessions history">
         ${rows || '<div class="track-empty">No saved sessions yet.</div>'}
       </div>
     `;
+
+    const sortToggle = container.querySelector('.history-sort-toggle');
+    if (sortToggle) {
+      sortToggle.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        sortMenuOpen = !sortMenuOpen;
+        await renderHistory();
+      });
+    }
+
+    container.querySelectorAll('.sort-option').forEach((option) => {
+      option.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        sortMode = option.getAttribute('data-sort') || 'recent';
+        sortMenuOpen = false;
+        await renderHistory();
+      });
+    });
+
+    if (sortMenuOpen) {
+      setTimeout(() => {
+        document.addEventListener('click', dismissSortMenu, { once: true });
+      }, 0);
+    }
 
     container.querySelectorAll('.history-session-row').forEach((row) => {
       row.addEventListener('click', async () => {
@@ -747,6 +813,12 @@
     }
   }
 
+  async function dismissSortMenu() {
+    if (!sortMenuOpen) return;
+    sortMenuOpen = false;
+    await renderHistory();
+  }
+
   async function renderDetailView(session) {
     const title = String(session?.listName || 'Session');
     const stamp = formatSessionDate(session?.savedAt || session?.endedAt);
@@ -787,6 +859,14 @@
           <span class="breadcrumb-sep">&gt;</span>
           ${detailNameMarkup}
         </h1>
+        <div class="header-controls">
+          <button class="sort-toggle history-detail-delete" type="button" aria-label="Delete this session">
+            <i data-feather="trash"></i>
+          </button>
+          <button class="add-button history-detail-restart" type="button" aria-label="Restart tracking from this session">
+            <i data-feather="play"></i>
+          </button>
+        </div>
       </div>
       <div class="item-count-text">Session ended ${escapeHtml(stamp)}</div>
       ${renderProgressWidget(progressSummary, 'Observation progress summary')}
@@ -805,12 +885,6 @@
           }
         </div>
       </details>
-      <div class="list-detail-footer">
-        <div></div>
-        <button class="drawer-action primary history-detail-restart" type="button" aria-label="Restart tracking from this session">
-          <span>Restart Tracking</span><i data-feather="target"></i>
-        </button>
-      </div>
     `;
 
     const root = container.querySelector('.history-breadcrumb-root');
@@ -953,6 +1027,30 @@
         if (!restarted) {
           window.alert('Unable to restart tracking from this session.');
         }
+      });
+    }
+
+    const deleteButton = container.querySelector('.history-detail-delete');
+    if (deleteButton) {
+      deleteButton.addEventListener('click', async () => {
+        const label = String(session?.listName || 'session');
+        const confirmed = window.confirm(`Delete "${label}"?`);
+        if (!confirmed) return;
+
+        const deleted = await deleteHistorySessionById(session.id);
+        if (!deleted) {
+          window.alert('Unable to delete this session right now.');
+          return;
+        }
+
+        selectedSessionId = null;
+        editingSessionId = null;
+        syncHistoryRoute(null);
+        if (detailChart) {
+          detailChart.destroy();
+          detailChart = null;
+        }
+        await renderHistory();
       });
     }
 

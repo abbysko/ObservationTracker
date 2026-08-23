@@ -233,13 +233,6 @@ function setScreen(name, options = {}) {
   const trackingState = getActiveTrackingState();
   const lockNavigation = trackingState.isActive && target !== 'track';
   if (lockNavigation) {
-    window.dispatchEvent(
-      new CustomEvent('ot-active-session-exit-request', {
-        detail: {
-          targetScreen: target,
-        },
-      })
-    );
     return;
   }
 
@@ -283,7 +276,7 @@ function ensureIcons() {
 }
 
 function renderBottomNav() {
-  return `\n<nav class="bottom-nav">\n  <button data-screen="lists" class="nav-button"><i data-feather="list"></i><span class="nav-label">Lists</span></button>\n  <button data-screen="track" class="nav-button"><i data-feather="target"></i><span class="nav-label">Track</span></button>\n  <button data-screen="history" class="nav-button"><i data-feather="clock"></i><span class="nav-label">History</span></button>\n</nav>`;
+  return `\n<nav class="bottom-nav">\n  <button data-screen="lists" class="nav-button"><i data-feather="list"></i><span class="nav-label">Lists</span></button>\n  <button data-screen="track" class="nav-button"><i data-feather="target"></i><span class="nav-label">Track</span></button>\n  <button data-screen="history" class="nav-button"><i data-feather="clock"></i><span class="nav-label">History</span></button>\n  <button class="nav-button nav-save-button" data-action="save-session" aria-label="Stop and save session"><i data-feather="save"></i><span class="nav-label">Save Session</span></button>\n</nav>`;
 }
 
 // helper to ensure nav is appended as a sibling of #app (so fixed behaves correctly)
@@ -326,20 +319,45 @@ async function loadScreen(url) {
 }
 
 function attachNavHandlers() {
-  const buttons = document.querySelectorAll('.bottom-nav .nav-button');
+  const buttons = document.querySelectorAll(
+    '.bottom-nav .nav-button[data-screen]'
+  );
   buttons.forEach((b) => {
     b.addEventListener('click', () => setScreen(b.getAttribute('data-screen')));
   });
+
+  const saveButton = document.querySelector('.bottom-nav .nav-save-button');
+  if (saveButton) {
+    saveButton.addEventListener('click', () => {
+      const trackingState = getActiveTrackingState();
+      if (!trackingState.isActive) return;
+      window.dispatchEvent(new CustomEvent('ot-active-session-save-request'));
+    });
+  }
+
   updateNav();
 }
 
 function updateNav() {
-  const buttons = document.querySelectorAll('.bottom-nav .nav-button');
+  const trackingState = getActiveTrackingState();
+  const trackingNavActive = trackingState.isActive && state.current === 'track';
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.classList.toggle('tracking-active', trackingNavActive);
+
+  const buttons = document.querySelectorAll(
+    '.bottom-nav .nav-button[data-screen]'
+  );
   buttons.forEach((b) => {
     if (b.getAttribute('data-screen') === state.current)
       b.classList.add('active');
     else b.classList.remove('active');
   });
+
+  const saveButton = document.querySelector('.bottom-nav .nav-save-button');
+  if (saveButton) {
+    if (trackingNavActive) saveButton.classList.add('active');
+    else saveButton.classList.remove('active');
+  }
 }
 
 // initialize after repository is ready
@@ -362,3 +380,7 @@ window._obs = {
   getRouteParams,
   fitDetailBreadcrumbs: () => scheduleDetailBreadcrumbFit(app),
 };
+
+window.addEventListener('ot-tracking-state-changed', () => {
+  updateNav();
+});
