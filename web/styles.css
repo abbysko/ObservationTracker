@@ -23,11 +23,10 @@
   --border-color: rgba(0, 0, 0, 0.08);
   --border: 1px solid var(--border-color);
 
-  /* Footer transition tuning (set deliberately slow for visual QA) */
-  --footer-motion-duration: 1200ms;
-  --footer-fade-duration: 1200ms;
-  --footer-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --footer-save-delay: 120ms;
+  /* Bottom nav layer treatment */
+  --nav-bg: color-mix(in srgb, var(--surface) 85%, var(--accent) 15%);
+  --nav-border-top: rgba(0, 0, 0, 0.12);
+  --nav-shadow-up: 0 -8px 20px rgba(17, 24, 39, 0.15);
 }
 
 /* Explicit theme override using data-theme on html */
@@ -47,6 +46,11 @@ html[data-theme='dark'] {
   /* generic border color for dark */
   --border-color: hsla(0, 0%, 100%, 0.06);
   --border: 1px solid var(--border-color);
+
+  /* Bottom nav layer treatment for dark */
+  --nav-bg: color-mix(in srgb, var(--surface) 90%, var(--accent) 10%);
+  --nav-border-top: hsla(0, 0%, 100%, 0.12);
+  --nav-shadow-up: 0 -8px 20px rgba(38, 42, 52, 0.44);
 }
 
 /* Base layout */
@@ -231,9 +235,9 @@ body {
   align-items: center;
   padding: 6px calc(10px + env(safe-area-inset-left)) 6px
     calc(10px + env(safe-area-inset-right));
-  background: var(--surface-bg);
-  border-top: var(--border);
-  box-shadow: none;
+  background: var(--nav-bg);
+  border-top: 1px solid var(--nav-border-top);
+  box-shadow: var(--nav-shadow-up);
   z-index: 30;
   /* ensure it covers safe area on devices with home indicator */
   padding-bottom: calc(6px + env(safe-area-inset-bottom));
