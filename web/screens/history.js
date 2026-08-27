@@ -28,12 +28,16 @@
       .toLocaleLowerCase();
   }
 
+  function getSessionName(session, fallback = 'Session') {
+    return String(session?.sessionName || fallback).trim();
+  }
+
   function hasDuplicateSessionName(sessions, candidateName, excludeId) {
     const targetKey = normalizeNameKey(candidateName);
     return (Array.isArray(sessions) ? sessions : []).some(
       (entry) =>
         String(entry?.id || '') !== String(excludeId || '') &&
-        normalizeNameKey(entry?.listName || '') === targetKey
+        normalizeNameKey(getSessionName(entry, '')) === targetKey
     );
   }
 
@@ -217,8 +221,8 @@
       (a, b) => {
         const aTime = Number(a.savedAt || a.endedAt || 0);
         const bTime = Number(b.savedAt || b.endedAt || 0);
-        const aName = normalizeNameKey(a?.listName || '');
-        const bName = normalizeNameKey(b?.listName || '');
+        const aName = normalizeNameKey(getSessionName(a, ''));
+        const bName = normalizeNameKey(getSessionName(b, ''));
         if (sortMode === 'alphabetical') {
           if (aName !== bName) return aName.localeCompare(bName);
           return bTime - aTime;
@@ -327,29 +331,27 @@
     };
     const rows = [
       ['Data from Loglist app', formatSessionDate(Date.now())],
-      ['Session', session?.listName || 'Session'],
+      ['Session', getSessionName(session)],
       ['Ended', formatSessionDate(session?.savedAt || session?.endedAt)],
       [],
       ['Item', 'Count'],
     ];
     const items = Array.isArray(session?.items) ? session.items : [];
     items.forEach((item, index) => {
-      rows.push([
-        item?.name || `Item ${index + 1}`,
-        Number(item?.count || 0),
-      ]);
+      rows.push([item?.name || `Item ${index + 1}`, Number(item?.count || 0)]);
     });
     return rows.map((row) => row.map(escapeCsv).join(',')).join('\r\n');
   }
 
   function shareSessionCsv(session) {
-    const filename = `${String(session?.listName || 'session')
-      .trim()
-      .replace(/[^a-z0-9]+/gi, '-')
-      .replace(/^-|-$/g, '') || 'session'}-observations.csv`;
+    const filename = `${
+      getSessionName(session, 'session')
+        .trim()
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '') || 'session'
+    }-observations.csv`;
     const csv = buildSessionCsv(session);
-    const shareHandler =
-      window.webkit?.messageHandlers?.shareSession || null;
+    const shareHandler = window.webkit?.messageHandlers?.shareSession || null;
 
     if (shareHandler) {
       shareHandler.postMessage({ filename, csv });
@@ -449,7 +451,7 @@
 
       const uniqueName = buildUniqueListName(
         lists,
-        `${String(session?.listName || 'Session').trim()} Restart`
+        `${getSessionName(session)} Restart`
       );
 
       list = {
@@ -472,7 +474,7 @@
     );
     sessionStorage.setItem(
       'ot_restart_history_session_name',
-      String(session?.listName || '').trim()
+      getSessionName(session, '')
     );
     sessionStorage.setItem('ot_restart_history_list_id', String(list.id || ''));
     sessionStorage.setItem(
@@ -523,7 +525,7 @@
       .map((session, index) => {
         const isSelected = listSelectedSessionId === session.id;
         const isEditing = editingSessionId === session.id;
-        const title = String(session?.listName || `Session ${index + 1}`);
+        const title = getSessionName(session, `Session ${index + 1}`);
         const stamp = formatSessionDate(session?.savedAt || session?.endedAt);
         const titleMarkup = isEditing
           ? `<input class="list-title-input history-session-title-input" data-id="${escapeAttr(
@@ -697,7 +699,9 @@
             const normalized = normalizeRenameValue(value);
             if (!normalized.ok) return normalized;
             const sessionsFromRepo = await window.repository.loadHistory();
-            if (hasDuplicateSessionName(sessionsFromRepo, normalized.value, id)) {
+            if (
+              hasDuplicateSessionName(sessionsFromRepo, normalized.value, id)
+            ) {
               return { ok: false, message: 'Session name must be unique.' };
             }
             return normalized;
@@ -760,7 +764,7 @@
         const target = sessions.find((x) => String(x.id || '') === String(id));
         if (!target) return;
 
-        const label = String(target?.listName || 'session');
+        const label = getSessionName(target, 'session');
         const confirmed = window.confirm(`Delete "${label}"?`);
         if (!confirmed) return;
 
@@ -794,7 +798,7 @@
   }
 
   async function renderDetailView(session) {
-    const title = String(session?.listName || 'Session');
+    const title = getSessionName(session);
     const stamp = formatSessionDate(session?.savedAt || session?.endedAt);
     const observedItems = normalizeObservedItems(session);
     const histogramItems = buildHistogramItems(observedItems);
@@ -937,7 +941,7 @@
     const deleteButton = container.querySelector('.history-detail-delete');
     if (deleteButton) {
       deleteButton.addEventListener('click', async () => {
-        const label = String(session?.listName || 'session');
+        const label = getSessionName(session, 'session');
         const confirmed = window.confirm(`Delete "${label}"?`);
         if (!confirmed) return;
 

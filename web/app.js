@@ -372,9 +372,15 @@ async function loadScreen(url) {
     ensureIcons();
     scheduleDetailBreadcrumbFit(app);
     // Also load corresponding screen JS if it exists
+    document
+      .querySelectorAll('script[data-screen-script]')
+      .forEach((script) => {
+        script.remove();
+      });
     const jsPath = url.replace(/\.html$/, '') + '.js';
     const scr = document.createElement('script');
     scr.src = jsPath;
+    scr.setAttribute('data-screen-script', 'true');
     scr.async = true;
     document.body.appendChild(scr);
   } catch (err) {
