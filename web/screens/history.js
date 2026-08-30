@@ -597,8 +597,8 @@
       <div class="screen-header">
         <h1>History</h1>
         <div class="header-controls">
-          <div class="sort-menu-wrap">
-            <button class="sort-toggle history-sort-toggle" type="button" aria-label="Sort sessions (${
+          <div class="header-menu-wrap">
+            <button class="header-button-secondary" type="button" data-header-action="sort" aria-label="Sort sessions (${
               sortMode === 'oldest'
                 ? 'Oldest First'
                 : sortMode === 'alphabetical'
@@ -609,14 +609,14 @@
             </button>
             ${
               sortMenuOpen
-                ? `<div class="sort-menu history-sort-menu">
-              <button class="sort-option ${
+                ? `<div class="header-menu history-sort-menu">
+              <button class="menu-option ${
                 sortMode === 'recent' ? 'active' : ''
               }" type="button" data-sort="recent">Recent First</button>
-              <button class="sort-option ${
+              <button class="menu-option ${
                 sortMode === 'oldest' ? 'active' : ''
               }" type="button" data-sort="oldest">Oldest First</button>
-              <button class="sort-option ${
+              <button class="menu-option ${
                 sortMode === 'alphabetical' ? 'active' : ''
               }" type="button" data-sort="alphabetical">Alphabetical</button>
             </div>`
@@ -630,7 +630,7 @@
       </div>
     `;
 
-    const sortToggle = container.querySelector('.history-sort-toggle');
+    const sortToggle = container.querySelector('[data-header-action="sort"]');
     if (sortToggle) {
       sortToggle.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -639,7 +639,7 @@
       });
     }
 
-    container.querySelectorAll('.sort-option').forEach((option) => {
+    container.querySelectorAll('.menu-option').forEach((option) => {
       option.addEventListener('click', async (e) => {
         e.stopPropagation();
         sortMode = option.getAttribute('data-sort') || 'recent';
@@ -838,13 +838,13 @@
           ${detailNameMarkup}
         </h1>
         <div class="header-controls">
-          <button class="sort-toggle history-detail-delete" type="button" aria-label="Delete this session">
+          <button class="header-button-secondary" type="button" data-header-action="delete" aria-label="Delete this session">
             <i data-feather="trash"></i>
           </button>
-          <button class="sort-toggle history-detail-share" type="button" aria-label="Share session as CSV">
+          <button class="header-button-secondary" type="button" data-header-action="share" aria-label="Share session as CSV">
             <i data-feather="share"></i>
           </button>
-          <button class="add-button history-detail-restart" type="button" aria-label="Restart tracking from this session">
+          <button class="header-button-primary history-detail-restart" type="button" aria-label="Restart tracking from this session">
             <i data-feather="play"></i>
           </button>
         </div>
@@ -931,14 +931,14 @@
       });
     }
 
-    const shareButton = container.querySelector('.history-detail-share');
+    const shareButton = container.querySelector('[data-header-action="share"]');
     if (shareButton) {
       shareButton.addEventListener('click', () => {
         shareSessionCsv(session);
       });
     }
 
-    const deleteButton = container.querySelector('.history-detail-delete');
+    const deleteButton = container.querySelector('[data-header-action="delete"]');
     if (deleteButton) {
       deleteButton.addEventListener('click', async () => {
         const label = getSessionName(session, 'session');

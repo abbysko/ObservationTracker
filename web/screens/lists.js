@@ -168,10 +168,10 @@
     controls.className = 'header-controls';
 
     const sortWrap = document.createElement('div');
-    sortWrap.className = 'sort-menu-wrap';
+    sortWrap.className = 'header-menu-wrap';
 
     const sortToggle = document.createElement('button');
-    sortToggle.className = 'sort-toggle';
+    sortToggle.className = 'header-button-secondary';
     sortToggle.setAttribute('type', 'button');
     sortToggle.setAttribute(
       'aria-label',
@@ -183,15 +183,15 @@
 
     if (sortMenuOpen) {
       const menu = document.createElement('div');
-      menu.className = 'sort-menu';
+      menu.className = 'header-menu';
       menu.innerHTML = `
-        <button class="sort-option ${
+        <button class="menu-option ${
           sortMode === 'default' ? 'active' : ''
         }" type="button" data-sort="default">Default Order</button>
-        <button class="sort-option ${
+        <button class="menu-option ${
           sortMode === 'alphabetical' ? 'active' : ''
         }" type="button" data-sort="alphabetical">Alphabetical</button>
-        <button class="sort-option ${
+        <button class="menu-option ${
           sortMode === 'recent' ? 'active' : ''
         }" type="button" data-sort="recent">Recent First</button>
       `;
@@ -200,7 +200,7 @@
 
     // create add button and place it inside the header so it aligns vertically with the title
     const add = document.createElement('button');
-    add.className = 'add-button';
+    add.className = 'header-button-primary';
     add.setAttribute('aria-label', 'Add list');
     add.innerHTML = '<i data-feather="plus"></i>';
 
@@ -229,7 +229,7 @@
       await rerenderFromRepository();
     });
 
-    document.querySelectorAll('.sort-option').forEach((option) => {
+    document.querySelectorAll('.menu-option').forEach((option) => {
       option.addEventListener('click', async (e) => {
         e.stopPropagation();
         sortMode = option.getAttribute('data-sort') || 'default';
@@ -294,18 +294,30 @@
       </h1>
     `;
 
+    const headerControls = document.createElement('div');
+    headerControls.className = 'header-controls detail-header-controls';
+
     if (canEditItems) {
       const add = document.createElement('button');
-      add.className = 'add-button';
+      add.className = 'header-button-secondary detail-add-item';
+      add.type = 'button';
       add.setAttribute('aria-label', 'Add list item');
       add.innerHTML = '<i data-feather="plus"></i>';
-      header.appendChild(add);
+      headerControls.appendChild(add);
     }
+
+    const count = Array.isArray(list.items) ? list.items.length : 0;
+    const startButton = document.createElement('button');
+    startButton.className = 'header-button-primary detail-start-session';
+    startButton.type = 'button';
+    startButton.setAttribute('aria-label', 'Start session for this list');
+    startButton.disabled = count === 0;
+    startButton.innerHTML = '<i data-feather="play"></i>';
+    headerControls.appendChild(startButton);
+    header.appendChild(headerControls);
 
     const card = document.createElement('div');
     card.className = 'list-detail-card lists-container';
-
-    const count = Array.isArray(list.items) ? list.items.length : 0;
 
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'list-detail-items';
@@ -361,16 +373,9 @@
 
     const footer = document.createElement('div');
     footer.className = 'list-detail-footer';
-    footer.innerHTML = `
-      <div class="list-detail-count">${count} item${
+    footer.innerHTML = `<div class="list-detail-count">${count} item${
       count === 1 ? '' : 's'
-    }</div>
-      <button class="drawer-action primary detail-start-session" type="button" aria-label="Start session for this list" ${
-        count === 0 ? 'disabled' : ''
-      }>
-        <span>Start Session</span><i data-feather="play"></i>
-      </button>
-    `;
+    }</div>`;
 
     container.appendChild(header);
     container.appendChild(card);
@@ -436,7 +441,7 @@
       });
     }
 
-    const detailAdd = container.querySelector('.screen-header .add-button');
+    const detailAdd = container.querySelector('.detail-add-item');
     if (detailAdd) {
       detailAdd.addEventListener('click', async () => {
         const nextList = list;

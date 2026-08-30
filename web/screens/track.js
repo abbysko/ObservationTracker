@@ -418,13 +418,13 @@
           ${breadcrumbSessionNameMarkup}
         </h1>
         <div class="header-controls">
-          <button class="sort-toggle track-add-item-button" type="button" aria-label="Add item to this list">
+          <button class="header-button-secondary track-add-item-button" type="button" aria-label="Add item to this list">
             <i data-feather="plus"></i>
           </button>
-          <button class="sort-toggle track-undo-button" type="button" aria-label="Undo last observation" disabled>
+          <button class="header-button-secondary track-undo-button" type="button" aria-label="Undo last observation" disabled>
             <i data-feather="rotate-ccw"></i>
           </button>
-          <button class="add-button track-end-session-button" type="button" aria-label="End active tracking session">
+          <button class="header-button-primary track-end-session-button" type="button" aria-label="End active tracking session">
             <i data-feather="save"></i>
           </button>
         </div>
