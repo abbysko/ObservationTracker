@@ -10,10 +10,17 @@
   --on-accent: #ffffff;
 
   /* Typography sizes (semantic) */
-  --fs-base: 15px; /* slightly smaller than browser default */
-  --fs-md: 14px;
-  --fs-sm: 12px;
-  --fs-xs: 11px;
+  --fs-base: 17px; /* mobile-first reading size */
+  --fs-md: 16px;
+  --fs-sm: 14px;
+  --fs-xs: 12px;
+
+  /* Shared sizing tokens for touch targets and icons */
+  --hit-target-sm: 36px;
+  --hit-target-md: 40px;
+  --icon-size-sm: 18px;
+  --icon-size-md: 20px;
+  --icon-size-lg: 32px;
 
   /* Semantic surface tokens (single source of truth for components) */
   --surface-bg: var(--surface);
@@ -139,9 +146,9 @@ body {
 }
 
 .screen-header .header-button-secondary {
-  width: 32px;
-  min-width: 32px;
-  height: 32px;
+  width: var(--hit-target-sm);
+  min-width: var(--hit-target-sm);
+  height: var(--hit-target-sm);
   border: none;
   background: transparent;
   color: var(--accent);
@@ -178,8 +185,8 @@ html[data-theme='dark']
 }
 
 .screen-header .header-button-secondary svg.feather {
-  width: 30px;
-  height: 30px;
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
   stroke: currentColor;
   stroke-width: 1.5;
 }
@@ -227,10 +234,10 @@ html[data-theme='dark'] .screen-header .header-menu {
 
 /* Position add button inside the header and make it round and match header height */
 .screen-header .header-button-primary {
-  flex: 0 0 36px;
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
+  flex: 0 0 var(--hit-target-md);
+  width: var(--hit-target-md);
+  min-width: var(--hit-target-md);
+  height: var(--hit-target-md);
   box-sizing: border-box;
   padding: 0;
   border-radius: 50%; /* make it round */
@@ -245,8 +252,8 @@ html[data-theme='dark'] .screen-header .header-menu {
   align-self: flex-end;
 }
 .screen-header .header-button-primary svg.feather {
-  width: 18px;
-  height: 18px;
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
   display: block;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -290,8 +297,8 @@ html[data-theme='dark'] .screen-header .header-menu {
 }
 
 .bottom-nav .nav-button svg.feather {
-  width: 20px;
-  height: 20px;
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
   flex-shrink: 0;
 }
 
@@ -466,12 +473,6 @@ html[data-theme='dark'] .screen-header .header-menu {
   justify-content: space-between;
 }
 
-@media (max-width: 560px) {
-  .history-session-actions-row .drawer-action {
-    flex: 1 1 0;
-  }
-}
-
 .list-item:last-child .list-drawer {
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
@@ -491,8 +492,8 @@ html[data-theme='dark'] .screen-header .header-menu {
 }
 
 .drawer-action svg.feather {
-  width: var(--fs-md);
-  height: var(--fs-md);
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
   flex: 0 0 auto;
   stroke: currentColor;
   stroke-width: 2;
@@ -587,8 +588,8 @@ html[data-theme='dark'] .list-drawer {
 .row-delete svg.feather,
 .detail-item-grip svg.feather,
 .detail-item-delete svg.feather {
-  width: var(--fs-md);
-  height: var(--fs-md);
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
   stroke: currentColor;
   stroke-width: 2;
 }
@@ -807,8 +808,8 @@ html[data-theme='dark'] .list-drawer {
 }
 
 .track-picker-selected-right svg.feather {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
   stroke: var(--accent);
   stroke-width: 2.2;
 }

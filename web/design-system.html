@@ -193,7 +193,7 @@
         background: var(--surface);
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
-        box-shadow: var(--shadow-soft);
+        box-shadow: var(--shadow-sm);
         padding: 20px;
         margin-bottom: 20px;
       }
@@ -672,15 +672,15 @@
             <li>
               In standard buttons, the icon should use the same color as the
               text in the control and should be relatively small - sized to fit
-              the control's height. These buttons always include a label to the
-              right of the icon.
+              the control's height (<code>--icon-size-sm</code>). These buttons generally include a label to the
+              right of the icon, with the exception of the small delete option on selected list items.
             </li>
             <li>
               Header action buttons are icon-only controls without labels, and
-              therefore use somewhat larger icons.
+              therefore use somewhat larger icons (<code>--icon-size-lg</code>).
             </li>
             <li>
-              Bottom navigation items pair a somewhat larger icon with a small
+              Bottom navigation items pair a somewhat larger icon (<code>--icon-size-md</code>) with a small
               text label below.
             </li>
           </ul>
@@ -829,21 +829,20 @@
           </p>
           <ul>
             <li>
-              <code>--fs-base</code>: <code>15px</code> - Global app text size
+              <code>--fs-base</code>: <code>17px</code> - Global app text size
               applied on <code>html, body</code>.
             </li>
             <li>
-              <code>--fs-md</code>: <code>14px</code> - Used for the names of
-              list items and other row names.
+              <code>--fs-md</code>: <code>16px</code> - Used for list item
+              names, row labels, and most medium-weight content.
             </li>
             <li>
-              <code>--fs-sm</code>: <code>12px</code> - Used for labels in the
-              bottom navigation bar and secondary buttons.
+              <code>--fs-sm</code>: <code>14px</code> - Used for supporting
+              text, menu items, and secondary controls.
             </li>
             <li>
-              <code>--fs-xs</code>: <code>11px</code> - Reserved for metadata
-              and support text (for example badges, counts, and footer summary
-              text).
+              <code>--fs-xs</code>: <code>12px</code> - Reserved for metadata,
+              badges, counts, and footer summary text.
             </li>
           </ul>
         </section>
@@ -857,7 +856,7 @@
           <br />
           <div class="mockup-frame">
             <div class="screen-header" style="margin: 0">
-              <h1>Main Page</h1>
+              <h1>Example Header</h1>
 
               <div class="header-controls">
                 <div class="header-menu-wrap">
@@ -869,7 +868,11 @@
                     <i data-feather="sliders"></i>
                   </button>
                 </div>
-                <button class="header-button-primary" type="button" aria-label="Add item">
+                <button
+                  class="header-button-primary"
+                  type="button"
+                  aria-label="Add item"
+                >
                   <i data-feather="plus"></i>
                 </button>
               </div>
@@ -885,13 +888,17 @@
           <div class="mockup-frame">
             <div class="screen-header" style="margin: 0">
               <h1 class="detail-breadcrumb">
-                <a href="#" class="list-breadcrumb-link">Main Page</a>
+                <a href="#" class="list-breadcrumb-link">Example Header</a>
                 <span class="breadcrumb-sep">&gt;</span>
                 <span class="breadcrumb-current">Detail Page</span>
               </h1>
 
               <div class="header-controls">
-                <button class="header-button-primary" type="button" aria-label="Add item">
+                <button
+                  class="header-button-primary"
+                  type="button"
+                  aria-label="Add item"
+                >
                   <i data-feather="plus"></i>
                 </button>
               </div>
@@ -1076,7 +1083,7 @@
 
           <div class="mockup-frame demo-dropdown-frame">
             <div class="screen-header demo-dropdown-header">
-              <h1>History</h1>
+              <h1>Example</h1>
               <div class="header-controls">
                 <div class="header-menu-wrap">
                   <button
@@ -1087,14 +1094,18 @@
                   >
                     <i data-feather="sliders"></i>
                   </button>
-                  <div class="header-menu" role="menu" aria-label="Sort options">
+                  <div
+                    class="header-menu"
+                    role="menu"
+                    aria-label="Sort options"
+                  >
                     <button
                       class="menu-option active"
                       type="button"
                       role="menuitemradio"
                       aria-checked="true"
                     >
-                      Recent First
+                      First menu item
                     </button>
                     <button
                       class="menu-option"
@@ -1102,7 +1113,7 @@
                       role="menuitemradio"
                       aria-checked="false"
                     >
-                      Oldest First
+                      Second menu item
                     </button>
                     <button
                       class="menu-option"
@@ -1110,7 +1121,7 @@
                       role="menuitemradio"
                       aria-checked="false"
                     >
-                      Alphabetical
+                      Third menu item
                     </button>
                   </div>
                 </div>
@@ -1147,7 +1158,7 @@
             <div class="track-progress" aria-label="Observation progress">
               <div class="track-progress-meta">
                 <span class="item-count-text track-summary-line">
-                  Observed: <span class="track-observed-count">4</span>
+                  Example Observed: <span class="track-observed-count">4</span>
                   <span class="track-observed-percent">(40%)</span>
                 </span>
                 <span class="item-count-text track-summary-line">
@@ -1267,23 +1278,23 @@
           <div class="mockup-frame" style="margin-top: 18px">
             <div class="track-grid" aria-label="Active tracking grid mockup">
               <button class="track-grid-button" type="button" data-count="2">
-                <span class="track-grid-label">Breakfast</span>
+                <span class="track-grid-label">Example</span>
                 <span class="track-grid-count">2</span>
               </button>
               <button class="track-grid-button" type="button" data-count="0">
-                <span class="track-grid-label">Lunch</span>
+                <span class="track-grid-label">Another</span>
                 <span class="track-grid-count track-grid-count-zero">0</span>
               </button>
               <button class="track-grid-button" type="button" data-count="1">
-                <span class="track-grid-label">Dinner</span>
+                <span class="track-grid-label">Third</span>
                 <span class="track-grid-count">1</span>
               </button>
               <button class="track-grid-button" type="button" data-count="3">
-                <span class="track-grid-label">Snacks</span>
+                <span class="track-grid-label">Fourth</span>
                 <span class="track-grid-count">3</span>
               </button>
               <button class="track-grid-button" type="button" data-count="0">
-                <span class="track-grid-label">Drinks</span>
+                <span class="track-grid-label">Last One</span>
                 <span class="track-grid-count track-grid-count-zero">0</span>
               </button>
             </div>
@@ -1320,15 +1331,15 @@
           <div class="mockup-frame" style="margin-top: 18px">
             <div class="screen-header" style="margin: 0">
               <h1 class="detail-breadcrumb">
-                <a href="#" class="list-breadcrumb-link">Lists</a>
+                <a href="#" class="list-breadcrumb-link">Example</a>
                 <span class="breadcrumb-sep">&gt;</span>
-                <span class="breadcrumb-current editable">Trip Ideas</span>
+                <span class="breadcrumb-current editable">Renamable Text</span>
               </h1>
             </div>
             <div class="lists-container" style="margin-top: 14px">
               <div class="list-item">
                 <div class="list-row">
-                  <div class="list-title editable">Weekend list</div>
+                  <div class="list-title editable">Renamable Item</div>
                   <div class="list-meta">
                     <span class="item-count-text list-row-count">4 items</span>
                   </div>
