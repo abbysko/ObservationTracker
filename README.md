@@ -14,7 +14,8 @@ This repository contains:
    - Run: `npm install`
    - `npm install` also runs `postinstall` to sync vendor bundles into `vendor`.
 2. Start the web dev server: `npm start`.
-3. Open the app at `http://localhost:8080` (port may vary).
+3. Open the landing page at `http://localhost:8080` (port may vary).
+4. Open the app at `http://localhost:8080/app.html`.
 
 ### Design system preview
 
