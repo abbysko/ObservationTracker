@@ -181,7 +181,7 @@ h1 {
 .highlight-screenshot {
   display: block;
   width: 100%;
-  max-width: 350px;
+  max-width: 250px;
   aspect-ratio: 1206 / 2622;
   margin: 8px auto 0;
   border: 1px solid var(--border-color);
