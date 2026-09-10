@@ -64,7 +64,7 @@ private struct LoglistWebView: UIViewRepresentable {
         webView.scrollView.alwaysBounceVertical = false
         webView.scrollView.contentInsetAdjustmentBehavior = .never
 
-        let startURL = URL(string: "loglist://app/index.html")!
+        let startURL = URL(string: "loglist://app/app.html")!
         webView.load(URLRequest(url: startURL))
 
         return webView

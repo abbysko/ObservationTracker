@@ -114,11 +114,8 @@ body {
   /* allow screen to fill the app width so header and lists use full width */
   max-width: none;
   width: 100%;
-  height: calc(100vh - 68px - env(safe-area-inset-bottom));
   margin: 0;
   position: relative; /* needed so the add button can be positioned relative to the screen */
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
 }
 
 .screen-about {
