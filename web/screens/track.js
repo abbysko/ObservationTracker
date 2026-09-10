@@ -53,7 +53,21 @@
           const countDifference =
             Number(b.getAttribute('data-count') || 0) -
             Number(a.getAttribute('data-count') || 0);
-          return countDifference;
+          if (countDifference !== 0) return countDifference;
+
+          const orderMode = grid.getAttribute('data-order-mode');
+          if (orderMode === 'custom') {
+            return (
+              Number(a.getAttribute('data-item-order') || 0) -
+              Number(b.getAttribute('data-item-order') || 0)
+            );
+          }
+
+          return String(a.getAttribute('data-item-label') || '').localeCompare(
+            String(b.getAttribute('data-item-label') || ''),
+            undefined,
+            { sensitivity: 'base' }
+          );
         })
         .forEach((button) => grid.appendChild(button));
     }, TRACK_GRID_REORDER_DELAY_MS);
@@ -106,6 +120,7 @@
         return {
           key: id || `idx-${index}-${label.toLowerCase()}`,
           label,
+          sourceIndex: index,
         };
       })
       .filter(Boolean);
@@ -136,6 +151,22 @@
     return String(value || '')
       .trim()
       .toLocaleLowerCase();
+  }
+
+  function getTrackOrderMode(list) {
+    return list?.displayOrderMode === 'custom' ? 'custom' : 'alphabetical';
+  }
+
+  function compareTrackItems(a, b, counts, orderMode) {
+    const countDifference =
+      Number(counts[b.key] || 0) - Number(counts[a.key] || 0);
+    if (countDifference !== 0) return countDifference;
+
+    if (orderMode === 'custom') {
+      return a.sourceIndex - b.sourceIndex;
+    }
+
+    return a.label.localeCompare(b.label, undefined, { sensitivity: 'base' });
   }
 
   function hasDuplicateSessionName(sessions, candidateName, excludeId) {
@@ -378,8 +409,9 @@
       totalItems > 0 ? (observedCount / totalItems) * 100 : 0;
     const observedPercentLabel = `${Math.round(observedPercent)}%`;
 
-    const ordered = [...normalized].sort(
-      (a, b) => Number(counts[b.key] || 0) - Number(counts[a.key] || 0)
+    const orderMode = getTrackOrderMode(list);
+    const ordered = [...normalized].sort((a, b) =>
+      compareTrackItems(a, b, counts, orderMode)
     );
 
     const gridMarkup = ordered
@@ -393,6 +425,8 @@
             type="button"
             data-item-key="${escapeAttr(item.key)}"
             data-count="${count}"
+            data-item-order="${item.sourceIndex}"
+            data-item-label="${escapeAttr(item.label)}"
             aria-label="Increment ${escapeAttr(item.label)} count"
           >
             <span class="track-grid-label">${escapeHtml(item.label)}</span>
@@ -446,7 +480,7 @@
       <div class="lists-container track-active-body" aria-label="Active tracking session">
         ${
           normalized.length
-            ? `<div class="track-grid">${gridMarkup}</div>`
+            ? `<div class="track-grid" data-order-mode="${orderMode}">${gridMarkup}</div>`
             : '<div class="track-empty">This list has no items to track.</div>'
         }
       </div>
