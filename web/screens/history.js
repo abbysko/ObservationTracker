@@ -938,7 +938,9 @@
       });
     }
 
-    const deleteButton = container.querySelector('[data-header-action="delete"]');
+    const deleteButton = container.querySelector(
+      '[data-header-action="delete"]'
+    );
     if (deleteButton) {
       deleteButton.addEventListener('click', async () => {
         const label = getSessionName(session, 'session');

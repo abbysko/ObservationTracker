@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "npx http-server ./web -c-1 -p 8080",
-    "format": "prettier --write \"**/*.{js,css,md,json}\"",
+    "format": "prettier --write \"**/*.{js,css,md,json,html}\"",
     "sync:vendor": "node scripts/sync-vendor.mjs",
     "postinstall": "node scripts/sync-vendor.mjs"
   },
