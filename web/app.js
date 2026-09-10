@@ -228,6 +228,7 @@ const screens = {
   lists: 'screens/lists.html',
   track: 'screens/track.html',
   history: 'screens/history.html',
+  about: 'screens/about.html',
 };
 
 function normalizeScreenName(name) {
@@ -343,7 +344,7 @@ function ensureIcons() {
 }
 
 function renderBottomNav() {
-  return `\n<nav class="bottom-nav">\n  <button data-screen="lists" class="nav-button"><i data-feather="list"></i><span class="nav-label">Lists</span></button>\n  <button data-screen="track" class="nav-button"><i data-feather="target"></i><span class="nav-label">Track</span></button>\n  <button data-screen="history" class="nav-button"><i data-feather="clock"></i><span class="nav-label">History</span></button>\n  <button class="nav-button nav-save-button" data-action="save-session" aria-label="Stop and save session"><i data-feather="save"></i><span class="nav-label">Save Session</span></button>\n</nav>`;
+  return `\n<nav class="bottom-nav">\n  <button data-screen="lists" class="nav-button"><i data-feather="list"></i><span class="nav-label">Lists</span></button>\n  <button data-screen="track" class="nav-button"><i data-feather="target"></i><span class="nav-label">Track</span></button>\n  <button data-screen="history" class="nav-button"><i data-feather="clock"></i><span class="nav-label">History</span></button>\n  <button data-screen="about" class="nav-button"><i data-feather="info"></i><span class="nav-label">About</span></button>\n  <button class="nav-button nav-save-button" data-action="save-session" aria-label="Stop and save session"><i data-feather="save"></i><span class="nav-label">Save Session</span></button>\n</nav>`;
 }
 
 // helper to ensure nav is appended as a sibling of #app (so fixed behaves correctly)

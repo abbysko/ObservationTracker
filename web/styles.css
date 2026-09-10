@@ -114,8 +114,80 @@ body {
   /* allow screen to fill the app width so header and lists use full width */
   max-width: none;
   width: 100%;
+  height: calc(100vh - 68px - env(safe-area-inset-bottom));
   margin: 0;
   position: relative; /* needed so the add button can be positioned relative to the screen */
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.screen-about {
+  width: calc(100% + 24px);
+  margin: -12px;
+}
+
+.about-marketing-root {
+  width: 100%;
+}
+
+.about-site-header,
+.about-site-footer {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 32px;
+  padding-right: 32px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.about-site-header .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--accent);
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.about-site-header .brand img {
+  display: block;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.about-site-footer {
+  min-height: 0;
+  padding-top: 24px;
+  padding-bottom: 28px;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 0;
+}
+
+.about-site-footer p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.about-site-footer p span {
+  color: #68727a;
+}
+
+@media (max-width: 760px) {
+  .about-site-header,
+  .about-site-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .about-site-header {
+    min-height: 70px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
 }
 
 .screen-header {
@@ -328,6 +400,10 @@ html[data-theme='dark'] .screen-header .header-menu {
 }
 
 .bottom-nav.tracking-active .nav-button[data-screen='history'] {
+  display: none;
+}
+
+.bottom-nav.tracking-active .nav-button[data-screen='about'] {
   display: none;
 }
 
