@@ -12,6 +12,7 @@
   let viewMode = 'lists';
   let sortMode = 'default';
   let sortMenuOpen = false;
+  let displayOrderMenuOpen = false;
 
   function normalizeRenameValue(rawValue) {
     if (typeof nameHelpers.normalizeRenameValue === 'function') {
@@ -28,6 +29,63 @@
     return String(value || '')
       .trim()
       .toLocaleLowerCase();
+  }
+
+  function getListDisplayOrderMode(list) {
+    if (!list || list.builtIn) return 'alphabetical';
+    return list.displayOrderMode === 'custom' ? 'custom' : 'alphabetical';
+  }
+
+  function areSameListItem(a, b) {
+    if (a === b) return true;
+    if (typeof a === 'string' && typeof b === 'string') return a === b;
+    if (typeof a === 'object' && a && typeof b === 'object' && b) {
+      const aId = a.id ?? a.name ?? '';
+      const bId = b.id ?? b.name ?? '';
+      if (aId && bId) return String(aId) === String(bId);
+      return String(a.name ?? '') === String(b.name ?? '');
+    }
+    return String(a ?? '') === String(b ?? '');
+  }
+
+  function getItemName(item) {
+    return String(typeof item === 'string' ? item : item?.name || '').trim();
+  }
+
+  function compareItemNames(a, b) {
+    return getItemName(a).localeCompare(getItemName(b), undefined, {
+      sensitivity: 'base',
+    });
+  }
+
+  function sortListItemsForDisplay(list) {
+    if (!Array.isArray(list?.items)) return [];
+    const items = [...list.items];
+    if (getListDisplayOrderMode(list) !== 'alphabetical') return items;
+    return items.sort(compareItemNames);
+  }
+
+  function insertItemInDisplayOrder(list, item) {
+    if (!list || list.builtIn) return item;
+    const nextItems = Array.isArray(list.items) ? [...list.items] : [];
+    const nextItem =
+      item && typeof item === 'object' && !Array.isArray(item)
+        ? { ...item }
+        : item;
+    if (getListDisplayOrderMode(list) !== 'alphabetical') {
+      nextItems.push(nextItem);
+      list.items = nextItems;
+      return nextItem;
+    }
+
+    const insertionIndex = nextItems.findIndex(
+      (current) => compareItemNames(current, nextItem) > 0
+    );
+    if (insertionIndex === -1) nextItems.push(nextItem);
+    else nextItems.splice(insertionIndex, 0, nextItem);
+
+    list.items = nextItems;
+    return nextItem;
   }
 
   function hasDuplicateListName(lists, candidateName, excludeId) {
@@ -168,10 +226,10 @@
     controls.className = 'header-controls';
 
     const sortWrap = document.createElement('div');
-    sortWrap.className = 'sort-menu-wrap';
+    sortWrap.className = 'header-menu-wrap';
 
     const sortToggle = document.createElement('button');
-    sortToggle.className = 'sort-toggle';
+    sortToggle.className = 'header-button-secondary';
     sortToggle.setAttribute('type', 'button');
     sortToggle.setAttribute(
       'aria-label',
@@ -183,15 +241,15 @@
 
     if (sortMenuOpen) {
       const menu = document.createElement('div');
-      menu.className = 'sort-menu';
+      menu.className = 'header-menu';
       menu.innerHTML = `
-        <button class="sort-option ${
+        <button class="menu-option ${
           sortMode === 'default' ? 'active' : ''
         }" type="button" data-sort="default">Default Order</button>
-        <button class="sort-option ${
+        <button class="menu-option ${
           sortMode === 'alphabetical' ? 'active' : ''
         }" type="button" data-sort="alphabetical">Alphabetical</button>
-        <button class="sort-option ${
+        <button class="menu-option ${
           sortMode === 'recent' ? 'active' : ''
         }" type="button" data-sort="recent">Recent First</button>
       `;
@@ -200,7 +258,7 @@
 
     // create add button and place it inside the header so it aligns vertically with the title
     const add = document.createElement('button');
-    add.className = 'add-button';
+    add.className = 'header-button-primary';
     add.setAttribute('aria-label', 'Add list');
     add.innerHTML = '<i data-feather="plus"></i>';
 
@@ -229,7 +287,7 @@
       await rerenderFromRepository();
     });
 
-    document.querySelectorAll('.sort-option').forEach((option) => {
+    document.querySelectorAll('.menu-option').forEach((option) => {
       option.addEventListener('click', async (e) => {
         e.stopPropagation();
         sortMode = option.getAttribute('data-sort') || 'default';
@@ -258,6 +316,7 @@
         id: 'custom-' + Date.now(),
         name,
         builtIn: false,
+        displayOrderMode: 'alphabetical',
         items: [],
       };
       window.repository.saveList(newList);
@@ -294,22 +353,94 @@
       </h1>
     `;
 
+    const headerControls = document.createElement('div');
+    headerControls.className = 'header-controls detail-header-controls';
+
     if (canEditItems) {
+      const displayOrderWrap = document.createElement('div');
+      displayOrderWrap.className = 'header-menu-wrap';
+
+      const displayOrderToggle = document.createElement('button');
+      displayOrderToggle.className =
+        'header-button-secondary detail-display-order-toggle';
+      displayOrderToggle.type = 'button';
+      displayOrderToggle.setAttribute(
+        'aria-label',
+        `Display order mode (${getListDisplayOrderMode(list)})`
+      );
+      displayOrderToggle.setAttribute(
+        'aria-expanded',
+        displayOrderMenuOpen ? 'true' : 'false'
+      );
+      displayOrderToggle.innerHTML = '<i data-feather="sliders"></i>';
+      displayOrderWrap.appendChild(displayOrderToggle);
+
+      if (displayOrderMenuOpen) {
+        const menu = document.createElement('div');
+        menu.className = 'header-menu';
+        const currentMode = getListDisplayOrderMode(list);
+        menu.innerHTML = `
+          <button class="menu-option ${
+            currentMode === 'alphabetical' ? 'active' : ''
+          }" type="button" data-display-order="alphabetical">Alphabetical</button>
+          <button class="menu-option ${
+            currentMode === 'custom' ? 'active' : ''
+          }" type="button" data-display-order="custom">Custom</button>
+        `;
+        displayOrderWrap.appendChild(menu);
+      }
+
+      displayOrderToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        displayOrderMenuOpen = !displayOrderMenuOpen;
+        renderDetailView(container, list);
+      });
+
+      const menuLinks = displayOrderWrap.querySelectorAll('.menu-option');
+      menuLinks.forEach((option) => {
+        option.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const nextMode =
+            option.getAttribute('data-display-order') || 'alphabetical';
+          const refreshed = await window.repository.loadLists();
+          const nextList = refreshed.find((x) => x.id === detailListId);
+          if (!nextList || nextList.builtIn) return;
+          nextList.displayOrderMode = nextMode;
+          if (nextMode === 'alphabetical') {
+            nextList.items = sortListItemsForDisplay(nextList);
+          }
+          await window.repository.saveList(nextList);
+          displayOrderMenuOpen = false;
+          render(await window.repository.loadLists());
+        });
+      });
+
+      headerControls.appendChild(displayOrderWrap);
+
       const add = document.createElement('button');
-      add.className = 'add-button';
+      add.className = 'header-button-secondary detail-add-item';
+      add.type = 'button';
       add.setAttribute('aria-label', 'Add list item');
       add.innerHTML = '<i data-feather="plus"></i>';
-      header.appendChild(add);
+      headerControls.appendChild(add);
     }
+
+    const count = Array.isArray(list.items) ? list.items.length : 0;
+    const startButton = document.createElement('button');
+    startButton.className = 'header-button-primary detail-start-session';
+    startButton.type = 'button';
+    startButton.setAttribute('aria-label', 'Start session for this list');
+    startButton.disabled = count === 0;
+    startButton.innerHTML = '<i data-feather="play"></i>';
+    headerControls.appendChild(startButton);
+    header.appendChild(headerControls);
 
     const card = document.createElement('div');
     card.className = 'list-detail-card lists-container';
 
-    const count = Array.isArray(list.items) ? list.items.length : 0;
-
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'list-detail-items';
-    const items = Array.isArray(list.items) ? list.items : [];
+    const items = sortListItemsForDisplay(list);
 
     if (!items.length) {
       const empty = document.createElement('div');
@@ -322,34 +453,44 @@
       itemsContainer.appendChild(empty);
     } else {
       items.forEach((item, index) => {
-        const selected = selectedDetailItemIndex === index;
-        const editing = editingDetailItemIndex === index && canEditItems;
+        const itemIndex = Array.isArray(list.items)
+          ? list.items.findIndex((candidate) =>
+              areSameListItem(candidate, item)
+            )
+          : index;
+        const resolvedIndex = itemIndex >= 0 ? itemIndex : index;
+        const selected = selectedDetailItemIndex === resolvedIndex;
+        const editing =
+          editingDetailItemIndex === resolvedIndex && canEditItems;
         const label = typeof item === 'string' ? item : item.name || '';
+        const isCustomOrder = getListDisplayOrderMode(list) === 'custom';
 
         const row = document.createElement('div');
         row.className = `list-detail-item${selected ? ' selected' : ''}`;
-        row.setAttribute('data-item-index', String(index));
+        row.setAttribute('data-item-index', String(resolvedIndex));
         row.setAttribute('draggable', 'false');
         row.innerHTML = `
           ${
-            canEditItems
-              ? `<button class="detail-item-grip" type="button" data-item-index="${index}" aria-label="Reorder handle"><i data-feather="menu"></i></button>`
+            canEditItems && isCustomOrder
+              ? `<button class="detail-item-grip" type="button" data-item-index="${resolvedIndex}" aria-label="Reorder handle"><i data-feather="menu"></i></button>`
               : ''
           }
           <div class="detail-item-main">
             ${
               editing
-                ? `<input class="detail-item-input" data-item-index="${index}" type="text" value="${escapeAttr(
+                ? `<input class="detail-item-input" data-item-index="${resolvedIndex}" type="text" value="${escapeAttr(
                     label
                   )}" aria-label="Edit list item" maxlength="80" />`
                 : `<span class="detail-item-label ${
                     canEditItems && selected ? 'editable' : ''
-                  }" data-item-index="${index}">${escapeHtml(label)}</span>`
+                  }" data-item-index="${resolvedIndex}">${escapeHtml(
+                    label
+                  )}</span>`
             }
           </div>
           ${
             canEditItems && selected
-              ? `<button class="detail-item-delete" data-item-index="${index}" aria-label="Delete item"><i data-feather="trash"></i></button>`
+              ? `<button class="detail-item-delete" data-item-index="${resolvedIndex}" aria-label="Delete item"><i data-feather="trash"></i></button>`
               : ''
           }
         `;
@@ -361,16 +502,9 @@
 
     const footer = document.createElement('div');
     footer.className = 'list-detail-footer';
-    footer.innerHTML = `
-      <div class="list-detail-count">${count} item${
+    footer.innerHTML = `<div class="list-detail-count">${count} item${
       count === 1 ? '' : 's'
-    }</div>
-      <button class="drawer-action primary detail-start-session" type="button" aria-label="Start session for this list" ${
-        count === 0 ? 'disabled' : ''
-      }>
-        <span>Start Session</span><i data-feather="play"></i>
-      </button>
-    `;
+    }</div>`;
 
     container.appendChild(header);
     container.appendChild(card);
@@ -436,7 +570,7 @@
       });
     }
 
-    const detailAdd = container.querySelector('.screen-header .add-button');
+    const detailAdd = container.querySelector('.detail-add-item');
     if (detailAdd) {
       detailAdd.addEventListener('click', async () => {
         const nextList = list;
@@ -461,10 +595,15 @@
           name,
         };
 
-        nextList.items = existingItems.concat(newItem);
+        insertItemInDisplayOrder(nextList, newItem);
+        if (getListDisplayOrderMode(nextList) === 'alphabetical') {
+          nextList.items = sortListItemsForDisplay(nextList);
+        }
         window.repository.saveList(nextList);
-        selectedDetailItemIndex = nextList.items.length - 1;
-        editingDetailItemIndex = nextList.items.length - 1;
+        selectedDetailItemIndex = nextList.items.findIndex((item) =>
+          areSameListItem(item, newItem)
+        );
+        editingDetailItemIndex = selectedDetailItemIndex;
         renderDetailView(container, nextList);
       });
     }
@@ -500,6 +639,9 @@
           id: 'item-' + Date.now() + '-' + index,
           name,
         }));
+        if (getListDisplayOrderMode(nextList) === 'alphabetical') {
+          nextList.items = sortListItemsForDisplay(nextList);
+        }
         await window.repository.saveList(nextList);
         selectedDetailItemIndex = null;
         editingDetailItemIndex = null;
@@ -584,6 +726,7 @@
 
   function initializeDetailSorting(container, list, canEditItems) {
     if (!canEditItems) return;
+    if (getListDisplayOrderMode(list) !== 'custom') return;
     if (!Array.isArray(list.items) || list.items.length < 2) return;
 
     const itemsContainer = container.querySelector('.list-detail-items');
@@ -688,7 +831,10 @@
           if (!normalized.ok) return normalized;
           const lists = await window.repository.loadLists();
           const nextList = lists.find((x) => x.id === detailListId);
-          if (nextList && hasDuplicateItemName(nextList.items, normalized.value, index)) {
+          if (
+            nextList &&
+            hasDuplicateItemName(nextList.items, normalized.value, index)
+          ) {
             return {
               ok: false,
               message: 'Item name must be unique within this list.',
@@ -699,14 +845,19 @@
         save: async (nextName) => {
           const lists = await window.repository.loadLists();
           const nextList = lists.find((x) => x.id === detailListId);
-          if (!nextList || nextList.builtIn || !Array.isArray(nextList.items)) return;
+          if (!nextList || nextList.builtIn || !Array.isArray(nextList.items))
+            return;
           const nextItems = [...nextList.items];
           const existing = nextItems[index];
-          if (typeof existing === 'string') nextItems[index] = nextName;
-          else if (existing && typeof existing === 'object') {
-            nextItems[index] = { ...existing, name: nextName };
-          }
-          nextList.items = nextItems;
+          const renamed =
+            typeof existing === 'string'
+              ? nextName
+              : { ...existing, name: nextName };
+          nextItems[index] = renamed;
+          nextList.items =
+            getListDisplayOrderMode(nextList) === 'alphabetical'
+              ? sortListItemsForDisplay({ ...nextList, items: nextItems })
+              : nextItems;
           await window.repository.saveList(nextList);
         },
         rerender: async () => {

@@ -13,6 +13,7 @@ Fields:
 - id: string
 - name: string
 - builtIn: boolean
+- displayOrderMode: string, either `alphabetical` or `custom` for custom lists; omitted for built-in lists
 - items: array of Item objects
 
 Example:
@@ -35,6 +36,7 @@ Notes:
 - Built-in lists are seeded from `web/data/builtins.json`.
 - Custom lists are stored alongside built-ins in `localStorage` under the `ot_lists_v1` key.
 - A custom list is created by duplicating a built-in list and marking the new item as `builtIn: false`.
+- Custom lists default to `displayOrderMode: "alphabetical"`, where item names are shown and inserted alphabetically case-insensitively. In `custom` mode, manual item ordering is preserved and new items are appended.
 
 ### Item
 
